@@ -33,3 +33,10 @@ button.danger { background: var(--iam-color-danger); } button:disabled { cursor:
 .kms-health-band { margin-bottom: 16px; padding: 13px 16px; border: 1px solid var(--iam-color-border); background: var(--iam-color-surface-soft); }.kms-health-band div { display: grid; gap: 3px; }.kms-health-band span { color: var(--iam-color-text-secondary); font-size: 13px; }
 .kms-guide { margin: 24px; padding: 32px; border: 1px solid var(--iam-color-border); border-radius: var(--iam-radius-card); background: var(--iam-color-surface); }.kms-guide p { margin-top: 8px; color: var(--iam-color-text-secondary); }.kms-standalone-header { display: grid; gap: 14px; padding: 20px 24px 0; border-bottom: 1px solid var(--iam-color-border); background: var(--iam-color-surface); }.kms-standalone-header span { color: var(--iam-color-text-secondary); }.kms-empty { padding: 30px !important; color: var(--iam-color-text-secondary); text-align: center !important; }.table-action { min-width: 34px; padding: 7px; }
 @media (max-width: 760px) { .kms-page { padding: 16px; }.kms-module-nav { padding: 0 12px; overflow-x: auto; }.kms-workspace { grid-template-columns: 1fr; }.kms-inline-form, .kms-facts { grid-template-columns: 1fr; }.kms-destruction-action { align-items: stretch; flex-direction: column; } }
+
+.kms-header-actions { display: flex; align-items: center; gap: 12px; }
+.kms-dialog { border: 1px solid var(--iam-color-border); border-radius: var(--iam-radius-card); background: var(--iam-color-surface); padding: 24px; width: min(420px, 92vw); }
+.kms-dialog form { display: grid; gap: 14px; }
+.kms-dialog h2 { margin: 0; }
+.kms-dialog label { display: grid; gap: 6px; font-size: 14px; color: var(--iam-color-text-secondary); }
+.kms-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }

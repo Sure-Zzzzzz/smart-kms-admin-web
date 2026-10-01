@@ -1,12 +1,44 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
-import { KeyRound, RefreshCw } from 'lucide-vue-next';
-import { listMyKmsKeys, type KmsKey } from '../api/kmsApi';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { KeyRound, Plus, RefreshCw } from 'lucide-vue-next';
+import { createKmsKey, listMyKmsKeys, type KmsKey } from '../api/kmsApi';
 
 const keys = ref<KmsKey[]>([]);
 const loading = ref(false);
 const errorMessage = ref('');
 const filter = reactive({ alias: '', state: '' });
+
+const createOpen = ref(false);
+const creating = ref(false);
+const createForm = reactive({ keyAlias: '', purpose: 'SIGN', algorithm: 'ES256' });
+const createAlgorithmOptions = computed(() =>
+  createForm.purpose === 'SIGN' ? ['ES256'] : ['AES_256_GCM']);
+
+function requestKey(): string {
+  return typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+}
+
+function openCreate() {
+  createForm.keyAlias = '';
+  createForm.purpose = 'SIGN';
+  createForm.algorithm = 'ES256';
+  createOpen.value = true;
+}
+
+async function submitCreate() {
+  if (!createForm.keyAlias.trim() || creating.value) return;
+  creating.value = true;
+  errorMessage.value = '';
+  try {
+    await createKmsKey({ keyAlias: createForm.keyAlias.trim(), purpose: createForm.purpose, algorithm: createForm.algorithm }, requestKey());
+    createOpen.value = false;
+    await loadKeys();
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '创建失败';
+  } finally {
+    creating.value = false;
+  }
+}
 
 async function loadKeys() {
   loading.value = true;
@@ -26,10 +58,22 @@ onMounted(() => { void loadKeys(); });
 <template>
   <section class="kms-page">
     <header class="kms-page-header">
-      <div><span>个人工作区</span><h1>我的密钥</h1></div><KeyRound
-        :size="26"
-        aria-hidden="true"
-      />
+      <div><span>个人工作区</span><h1>我的密钥</h1></div>
+      <div class="kms-header-actions">
+        <button
+          type="button"
+          @click="openCreate"
+        >
+          <Plus
+            :size="16"
+            aria-hidden="true"
+          />新建密钥
+        </button>
+        <KeyRound
+          :size="26"
+          aria-hidden="true"
+        />
+      </div>
     </header>
     <p
       v-if="errorMessage"
@@ -38,6 +82,61 @@ onMounted(() => { void loadKeys(); });
     >
       {{ errorMessage }}
     </p>
+    <dialog
+      v-if="createOpen"
+      class="kms-dialog"
+      open
+    >
+      <form @submit.prevent="() => void submitCreate()">
+        <h2>新建密钥</h2>
+        <label>
+          密钥别名
+          <input
+            v-model.trim="createForm.keyAlias"
+            maxlength="128"
+            placeholder="例如：订单签名密钥"
+            required
+          >
+        </label>
+        <label>用途
+          <select v-model="createForm.purpose">
+            <option value="SIGN">
+              签名（SIGN）
+            </option>
+            <option value="ENCRYPT">
+              加解密（ENCRYPT）
+            </option>
+          </select>
+        </label>
+        <label>算法
+          <select v-model="createForm.algorithm">
+            <option
+              v-for="option in createAlgorithmOptions"
+              :key="option"
+              :value="option"
+            >
+              {{ option === 'ES256' ? 'ES256（非对称）' : 'AES-256-GCM（对称）' }}
+            </option>
+          </select>
+        </label>
+        <div class="kms-dialog-actions">
+          <button
+            type="button"
+            class="secondary"
+            :disabled="creating"
+            @click="createOpen = false"
+          >
+            取消
+          </button>
+          <button
+            type="submit"
+            :disabled="creating || !createForm.keyAlias"
+          >
+            {{ creating ? '创建中...' : '创建' }}
+          </button>
+        </div>
+      </form>
+    </dialog>
     <div class="kms-toolbar">
       <input
         v-model="filter.alias"
@@ -98,7 +197,7 @@ onMounted(() => { void loadKeys(); });
                 colspan="5"
                 class="kms-empty"
               >
-                暂无密钥
+                暂无密钥，点击右上角「新建密钥」创建第一把
               </td>
             </tr>
           </tbody>
