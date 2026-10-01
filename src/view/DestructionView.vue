@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { Activity, ShieldAlert } from 'lucide-vue-next';
 import { listKmsDestructionJobs, loadKmsWorkerHealth, type KmsDestructionJob, type KmsWorkerHealth } from '../api/kmsApi';
 
 const jobs = ref<KmsDestructionJob[]>([]); const health = ref<KmsWorkerHealth | null>(null); const loading = ref(false); const errorMessage = ref('');
@@ -12,10 +11,7 @@ onMounted(() => { void load(); });
 <template>
   <section class="kms-page">
     <header class="kms-page-header">
-      <div><span>生命周期</span><h1>销毁任务</h1></div><ShieldAlert
-        :size="26"
-        aria-hidden="true"
-      />
+      <div><span>生命周期</span><h1>销毁任务</h1></div>
     </header><p
       v-if="errorMessage"
       class="kms-message danger"
@@ -24,10 +20,7 @@ onMounted(() => { void load(); });
       {{ errorMessage }}
     </p>
     <section class="kms-health-band">
-      <Activity
-        :size="20"
-        aria-hidden="true"
-      /><div><strong>{{ health?.running ? (health.claimable ? 'Worker 正常运行' : 'Worker 已暂停领取') : 'Worker 未运行' }}</strong><span>最近成功扫描：{{ time(health?.lastSuccessfulScanAt || null) }} · 连续失败：{{ health?.consecutiveFailureCount ?? 0 }}</span></div>
+      <div><strong>{{ health?.running ? (health.claimable ? 'Worker 正常运行' : 'Worker 已暂停领取') : 'Worker 未运行' }}</strong><span>最近成功扫描：{{ time(health?.lastSuccessfulScanAt || null) }} · 连续失败：{{ health?.consecutiveFailureCount ?? 0 }}</span></div>
     </section>
     <section class="admin-data-surface">
       <div class="kms-surface-header">

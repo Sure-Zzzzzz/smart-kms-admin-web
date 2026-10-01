@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { KeyRound, Plus, RefreshCw } from 'lucide-vue-next';
 import { createKmsKey, listMyKmsKeys, type KmsKey } from '../api/kmsApi';
 
 const keys = ref<KmsKey[]>([]);
@@ -65,15 +64,9 @@ onMounted(() => { void loadKeys(); });
           type="button"
           @click="openCreate"
         >
-          <Plus
-            :size="16"
-            aria-hidden="true"
-          />新建密钥
+          新建密钥
         </button>
-        <KeyRound
-          :size="26"
-          aria-hidden="true"
-        />
+        
       </div>
     </header>
     <p
@@ -176,10 +169,7 @@ onMounted(() => { void loadKeys(); });
         :disabled="loading"
         @click="() => void loadKeys()"
       >
-        <RefreshCw
-          :size="16"
-          aria-hidden="true"
-        />查询
+        查询
       </button>
     </div>
     <section class="admin-data-surface">

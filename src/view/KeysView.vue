@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { Check, KeyRound, RotateCw, ShieldAlert } from 'lucide-vue-next';
 import { cancelKmsDestruction, changeKmsKeyState, createKmsKey, listAdminKmsKeys, rotateKmsKey, scheduleKmsDestruction, type KmsKey } from '../api/kmsApi';
 
 const keys = ref<KmsKey[]>([]);
@@ -87,10 +86,7 @@ onMounted(() => { void loadKeys(); });
 <template>
   <section class="kms-page">
     <header class="kms-page-header">
-      <div><span>密钥管理</span><h1>逻辑密钥</h1></div><KeyRound
-        :size="26"
-        aria-hidden="true"
-      />
+      <div><span>密钥管理</span><h1>逻辑密钥</h1></div>
     </header>
     <p
       v-if="errorMessage"
@@ -193,10 +189,7 @@ onMounted(() => { void loadKeys(); });
             type="submit"
             :disabled="submitting"
           >
-            <Check
-              :size="16"
-              aria-hidden="true"
-            />创建
+            创建
           </button>
         </form>
       </aside>
@@ -234,19 +227,13 @@ onMounted(() => { void loadKeys(); });
           :disabled="submitting || selected.state !== 'ACTIVE'"
           @click="() => void submitRotate()"
         >
-          <RotateCw
-            :size="16"
-            aria-hidden="true"
-          />轮换
+          轮换
         </button>
       </div>
       <div
         class="kms-destruction-action"
       >
-        <ShieldAlert
-          :size="18"
-          aria-hidden="true"
-        /><template v-if="canSchedule">
+        <template v-if="canSchedule">
           <input
             v-model="destructionDueAt"
             type="datetime-local"

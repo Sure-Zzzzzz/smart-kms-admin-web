@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { Plus, ShieldCheck, Trash2 } from 'lucide-vue-next';
+import { Trash2 } from 'lucide-vue-next';
 import { createKmsPolicy, listAdminKmsKeys, listKmsPolicies, revokeKmsPolicy, type KmsKey, type KmsPolicy } from '../api/kmsApi';
 
 const keys = ref<KmsKey[]>([]); const policies = ref<KmsPolicy[]>([]); const keyRef = ref('');
@@ -18,10 +18,7 @@ onMounted(() => { void loadKeys(); });
 <template>
   <section class="kms-page">
     <header class="kms-page-header">
-      <div><span>精确授权</span><h1>密钥策略</h1></div><ShieldCheck
-        :size="26"
-        aria-hidden="true"
-      />
+      <div><span>精确授权</span><h1>密钥策略</h1></div>
     </header><p
       v-if="errorMessage"
       class="kms-message danger"
@@ -72,10 +69,7 @@ onMounted(() => { void loadKeys(); });
           type="submit"
           :disabled="submitting || !keyRef"
         >
-          <Plus
-            :size="16"
-            aria-hidden="true"
-          />创建策略
+          创建策略
         </button>
       </form>
     </section>

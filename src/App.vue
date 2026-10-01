@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { RouterView } from 'vue-router';
-import { Key, KeyRound, ListChecks, ShieldAlert } from 'lucide-vue-next';
 import { hasKmsPagePermission, kmsState } from './kmsState';
 
 const standalone = computed(() => !kmsState.bridge);
 const menus = [
-  { to: '/my-keys', label: '我的密钥', permission: 'kms.page.my-keys', icon: Key },
-  { to: '/keys', label: '密钥', permission: 'kms.page.keys', icon: KeyRound },
-  { to: '/policies', label: '策略', permission: 'kms.page.policies', icon: ListChecks },
-  { to: '/destruction', label: '销毁任务', permission: 'kms.page.destruction', icon: ShieldAlert }
+  { to: '/my-keys', label: '我的密钥', permission: 'kms.page.my-keys' },
+  { to: '/keys', label: '密钥', permission: 'kms.page.keys' },
+  { to: '/policies', label: '策略', permission: 'kms.page.policies' },
+  { to: '/destruction', label: '销毁任务', permission: 'kms.page.destruction' }
 ];
 </script>
 
@@ -31,11 +30,7 @@ const menus = [
           :key="item.to"
           :to="item.to"
         >
-          <component
-            :is="item.icon"
-            :size="18"
-            aria-hidden="true"
-          />{{ item.label }}
+{{ item.label }}
         </RouterLink>
       </nav>
     </header>
