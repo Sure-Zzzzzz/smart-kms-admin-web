@@ -61,6 +61,7 @@ onMounted(() => { void loadKeys(); });
       <div><span>个人工作区</span><h1>我的密钥</h1></div>
       <div class="kms-header-actions">
         <button
+          class="button-primary"
           type="button"
           @click="openCreate"
         >
@@ -82,12 +83,18 @@ onMounted(() => { void loadKeys(); });
     >
       {{ errorMessage }}
     </p>
-    <dialog
+    <div
       v-if="createOpen"
-      class="kms-dialog"
-      open
+      class="dialog-backdrop"
+      @click.self="!creating && (createOpen = false)"
     >
-      <form @submit.prevent="() => void submitCreate()">
+      <section
+        class="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="新建密钥"
+      >
+        <form @submit.prevent="() => void submitCreate()">
         <h2>新建密钥</h2>
         <label>
           密钥别名
@@ -119,10 +126,10 @@ onMounted(() => { void loadKeys(); });
             </option>
           </select>
         </label>
-        <div class="kms-dialog-actions">
+        <footer class="kms-dialog-actions">
           <button
             type="button"
-            class="secondary"
+            class="button-secondary"
             :disabled="creating"
             @click="createOpen = false"
           >
@@ -130,13 +137,15 @@ onMounted(() => { void loadKeys(); });
           </button>
           <button
             type="submit"
+            class="button-primary"
             :disabled="creating || !createForm.keyAlias"
           >
             {{ creating ? '创建中...' : '创建' }}
           </button>
-        </div>
-      </form>
-    </dialog>
+        </footer>
+        </form>
+      </section>
+    </div>
     <div class="kms-toolbar">
       <input
         v-model="filter.alias"
@@ -163,7 +172,7 @@ onMounted(() => { void loadKeys(); });
       </select>
       <button
         type="button"
-        class="secondary"
+        class="button-secondary"
         :disabled="loading"
         @click="() => void loadKeys()"
       >

@@ -68,6 +68,7 @@ onMounted(() => { void loadKeys(); });
           v-model="form.expiresAt"
           type="datetime-local"
         ></label><button
+          class="button-primary"
           type="submit"
           :disabled="submitting || !keyRef"
         >
@@ -91,7 +92,7 @@ onMounted(() => { void loadKeys(); });
               <td><code>{{ policy.principalId }}</code></td><td>{{ policy.keyVersion ?? '全部' }}</td><td>{{ policy.operation }}</td><td>{{ policy.expiresAt ? new Date(policy.expiresAt).toLocaleString() : '长期有效' }}</td><td>
                 <button
                   type="button"
-                  class="table-action danger"
+                  class="table-action button-danger"
                   :disabled="submitting"
                   aria-label="撤销策略"
                   @click="() => void submitRevoke(policy)"

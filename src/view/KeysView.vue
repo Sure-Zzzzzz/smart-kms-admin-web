@@ -131,7 +131,7 @@ onMounted(() => { void loadKeys(); });
       </select>
       <button
         type="button"
-        class="secondary"
+        class="button-secondary"
         :disabled="loading"
         @click="() => void loadKeys()"
       >
@@ -189,6 +189,7 @@ onMounted(() => { void loadKeys(); });
             :value="createForm.algorithm === 'ES256' ? 'ES256' : 'AES-256-GCM'"
             readonly
           ></label><button
+            class="button-primary"
             type="submit"
             :disabled="submitting"
           >
@@ -215,21 +216,21 @@ onMounted(() => { void loadKeys(); });
       >
         <button
           type="button"
-          class="secondary"
+          class="button-secondary"
           :disabled="submitting || selected.state !== 'ACTIVE'"
           @click="() => void submitState('DISABLED')"
         >
           停用
         </button><button
           type="button"
-          class="secondary"
+          class="button-secondary"
           :disabled="submitting || selected.state !== 'DISABLED'"
           @click="() => void submitState('ACTIVE')"
         >
           启用
         </button><button
           type="button"
-          class="secondary"
+          class="button-secondary"
           :disabled="submitting || selected.state !== 'ACTIVE'"
           @click="() => void submitRotate()"
         >
@@ -252,7 +253,7 @@ onMounted(() => { void loadKeys(); });
             aria-label="销毁时间"
           ><button
             type="button"
-            class="danger"
+            class="button-danger"
             :disabled="submitting || !destructionDueAt"
             @click="() => void submitDestruction()"
           >
@@ -261,7 +262,7 @@ onMounted(() => { void loadKeys(); });
         </template><button
           v-else-if="selected.state === 'PENDING_DESTRUCTION'"
           type="button"
-          class="secondary"
+          class="button-secondary"
           :disabled="submitting"
           @click="() => void submitCancelDestruction()"
         >

@@ -1,4 +1,4 @@
-:root { font-family: Inter, "Microsoft YaHei", sans-serif; color: var(--iam-color-text-primary); background: var(--iam-color-canvas); }
+:root { font-family: var(--iam-font-family); color: var(--iam-color-text-primary); background: var(--iam-color-canvas); }
 * { box-sizing: border-box; }
 body { margin: 0; }
 button, input, select { font: inherit; }
@@ -14,16 +14,16 @@ button { cursor: pointer; }
 .kms-page-header { justify-content: space-between; margin-bottom: 20px; }
 .kms-page-header span, .kms-surface-header span { color: var(--iam-color-text-secondary); font-size: 13px; }
 h1, h2, p { margin: 0; } h1 { font-size: 24px; } h2 { font-size: 17px; }
-.admin-data-surface, .kms-detail-panel { border: 1px solid var(--iam-color-border); background: var(--iam-color-surface); border-radius: var(--iam-radius-card); box-shadow: var(--iam-shadow); }
+.admin-data-surface, .kms-detail-panel { border: 1px solid var(--iam-color-border); background: var(--iam-color-surface); border-radius: var(--iam-radius-card); box-shadow: var(--iam-shadow-card); }
 .admin-data-surface { padding: 18px; }
 .kms-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; }
 .kms-detail-panel { padding: 18px; }
 .kms-surface-header { justify-content: space-between; margin-bottom: 14px; }
 .kms-toolbar { margin-bottom: 16px; flex-wrap: wrap; }
 input, select { min-height: 36px; padding: 7px 9px; border: 1px solid var(--iam-color-border); border-radius: var(--iam-radius-control); background: var(--iam-color-surface-raised); color: var(--iam-color-text-primary); }
-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 12px; border: 0; border-radius: var(--iam-radius-control); background: var(--iam-color-primary); color: var(--iam-color-primary-text); }
-button.secondary { border: 1px solid var(--iam-color-border-strong); background: var(--iam-color-surface); color: var(--iam-color-text-primary); }
-button.danger { background: var(--iam-color-danger); } button:disabled { cursor: not-allowed; opacity: .55; }
+button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+/* 对话框/遮罩直接用契约 .dialog-backdrop/.confirm-dialog；按钮语义对齐契约 .button-* 家族 */
+button:disabled { cursor: not-allowed; opacity: .55; }
 .drawer-form, .kms-inline-form { display: grid; gap: 12px; }.drawer-form label, .kms-inline-form label { display: grid; gap: 5px; color: var(--iam-color-text-secondary); font-size: 13px; }
 .kms-inline-form { grid-template-columns: minmax(180px, 1.5fr) 100px 150px minmax(180px, 1fr) auto; align-items: end; margin-top: 14px; }
 .kms-table-wrap { overflow-x: auto; }.responsive-table { width: 100%; border-collapse: collapse; font-size: 14px; }.responsive-table th, .responsive-table td { padding: 11px 10px; border-bottom: 1px solid var(--iam-color-border); text-align: left; white-space: nowrap; }.responsive-table th { color: var(--iam-color-text-secondary); font-weight: 600; }.responsive-table tbody tr:not(.kms-empty):hover, .responsive-table tr.selected { background: var(--iam-color-surface-soft); cursor: pointer; }
@@ -35,8 +35,7 @@ button.danger { background: var(--iam-color-danger); } button:disabled { cursor:
 @media (max-width: 760px) { .kms-page { padding: 16px; }.kms-module-nav { padding: 0 12px; overflow-x: auto; }.kms-workspace { grid-template-columns: 1fr; }.kms-inline-form, .kms-facts { grid-template-columns: 1fr; }.kms-destruction-action { align-items: stretch; flex-direction: column; } }
 
 .kms-header-actions { display: flex; align-items: center; gap: 12px; }
-.kms-dialog { border: 1px solid var(--iam-color-border); border-radius: var(--iam-radius-card); background: var(--iam-color-surface); padding: 24px; width: min(420px, 92vw); }
-.kms-dialog form { display: grid; gap: 14px; }
-.kms-dialog h2 { margin: 0; }
-.kms-dialog label { display: grid; gap: 6px; font-size: 14px; color: var(--iam-color-text-secondary); }
+.confirm-dialog form { display: grid; gap: 14px; }
+.confirm-dialog h2 { margin: 0; }
+.confirm-dialog label { display: grid; gap: 6px; font-size: 14px; color: var(--iam-color-text-secondary); text-align: left; }
 .kms-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
