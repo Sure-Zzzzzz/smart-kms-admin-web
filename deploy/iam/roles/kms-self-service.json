@@ -1,0 +1,5 @@
+{
+  "code": "kms-self-service",
+  "name": "KMS 普通用户",
+  "description": "仅查看当前认证主体归属的 KMS 密钥。"
+}

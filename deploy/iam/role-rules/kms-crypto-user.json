@@ -1,0 +1,5 @@
+{
+  "pagePermissions": [],
+  "apiPermissions": [ "kms.sign", "kms.verify", "kms.encrypt", "kms.decrypt", "kms.read-public-key" ],
+  "dataGrantTemplate": null
+}

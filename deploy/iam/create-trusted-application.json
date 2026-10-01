@@ -1,0 +1,53 @@
+{
+  "applicationCode": "kms",
+  "applicationName": "KMS 密钥管理",
+  "description": "KMS 管理端乾坤子应用",
+  "icon": "key",
+  "portal": {
+    "enabled": true,
+    "entry": "https://iam.zs.com/app/kms/index.html",
+    "apiBase": "https://iam.zs.com/api/kms",
+    "menus": [
+      { "code": "my-keys", "name": "我的密钥", "route": "/my-keys", "sortOrder": 1 },
+      { "code": "keys", "name": "密钥管理", "route": "/keys", "sortOrder": 2 },
+      { "code": "policies", "name": "策略", "route": "/policies", "sortOrder": 3 },
+      { "code": "destruction", "name": "销毁任务", "route": "/destruction", "sortOrder": 4 }
+    ]
+  },
+  "initialClient": {
+    "clientId": "kms-portal-web",
+    "clientName": "KMS Portal PKCE",
+    "clientType": "PUBLIC",
+    "requireConsent": false,
+    "redirectUris": [ "https://iam.zs.com/app/kms/oauth-callback" ],
+    "scopes": [ "openid", "profile" ],
+    "grantTypes": [ "authorization_code" ],
+    "authenticationMethods": [ "none" ]
+  },
+  "roles": [ "kms-admin", "kms-self-service", "kms-crypto-user" ],
+  "pagePermissions": [
+    "kms.page.my-keys",
+    "kms.page.keys",
+    "kms.page.policies",
+    "kms.page.destruction"
+  ],
+  "apiPermissions": [
+    "kms.me.read",
+    "kms.key.read",
+    "kms.key.manage",
+    "kms.key.policy",
+    "kms.key.destroy",
+    "kms.sign",
+    "kms.verify",
+    "kms.encrypt",
+    "kms.decrypt",
+    "kms.read-public-key"
+  ],
+  "dataResources": [
+    {
+      "resource": "kms-key",
+      "actions": [ "read", "manage", "policy", "destroy" ],
+      "dimensions": [ "ownerPrincipalId" ]
+    }
+  ]
+}

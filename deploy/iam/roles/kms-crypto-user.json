@@ -1,0 +1,5 @@
+{
+  "code": "kms-crypto-user",
+  "name": "KMS 密码服务",
+  "description": "仅可通过服务 API 执行精确授权的密码学操作。"
+}

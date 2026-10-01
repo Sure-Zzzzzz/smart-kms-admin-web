@@ -1,0 +1,5 @@
+{
+  "code": "kms-admin",
+  "name": "KMS 管理员",
+  "description": "管理全部 KMS 密钥、策略与销毁任务。"
+}

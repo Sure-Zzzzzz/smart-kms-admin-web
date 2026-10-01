@@ -1,0 +1,9 @@
+<template>
+  <section
+    class="kms-guide"
+    role="alert"
+  >
+    <h2>无权访问</h2>
+    <p>当前身份没有访问此页面的权限。</p>
+  </section>
+</template>
