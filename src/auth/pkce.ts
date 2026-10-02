@@ -118,7 +118,6 @@ export async function handleKmsOAuthCallback(): Promise<KmsCallbackOutcome> {
   write(ACCESS_TOKEN_EXPIRES_AT_KEY, String(Date.now() + (payload.expires_in || 3600) * 1000));
   write(LAST_AUTH_AT_KEY, String(Date.now()));
   remove(RETRY_COUNT_KEY);
-  window.history.replaceState(window.history.state, '', window.location.pathname);
   return { kind: 'authorized', target };
 }
 
