@@ -44,3 +44,6 @@ export const createKmsPolicy = (keyRef: string, input: { principalId: string; ke
 export const revokeKmsPolicy = (keyRef: string, policyId: string, expectedRowVersion: number, key: string) => request<void>(`/keys/${encodeURIComponent(keyRef)}/policies/${encodeURIComponent(policyId)}`, { method: 'DELETE', headers: { 'Idempotency-Key': key }, body: JSON.stringify({ expectedRowVersion }) }, '撤销策略');
 export const listKmsDestructionJobs = (page = 1, size = 20) => request<KmsPage<KmsDestructionJob>>(`/destruction-jobs?page=${page}&size=${size}`, {}, '查询销毁任务');
 export const loadKmsWorkerHealth = () => request<KmsWorkerHealth>('/destruction-worker/health', {}, '读取 worker 健康状态');
+export interface KmsOwnerDestructionPolicy { ownerPrincipalId: string; exists: boolean; minScheduleAheadSeconds: number | null; maxScheduleAheadSeconds: number | null; rowVersion: number; }
+export const loadMyDestructionPolicy = () => request<KmsOwnerDestructionPolicy>('/me/destruction-policy', {}, '读取销毁窗口政策');
+export const saveMyDestructionPolicy = (input: { minScheduleAheadSeconds: number | null; maxScheduleAheadSeconds: number | null }) => request<KmsOwnerDestructionPolicy>('/me/destruction-policy', { method: 'PUT', body: JSON.stringify(input) }, '保存销毁窗口政策');

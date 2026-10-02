@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { createKmsKey, listMyKmsKeys, type KmsKey } from '../api/kmsApi';
+import { createKmsKey, listMyKmsKeys, loadMyDestructionPolicy, saveMyDestructionPolicy, type KmsKey } from '../api/kmsApi';
 
 const keys = ref<KmsKey[]>([]);
 const loading = ref(false);
@@ -51,6 +51,47 @@ async function loadKeys() {
   }
 }
 
+const policyOpen = ref(false);
+const policySaving = ref(false);
+const policyForm = reactive({ minHours: '', maxHours: '' });
+
+function openPolicy() {
+  policyForm.minHours = '';
+  policyForm.maxHours = '';
+  policyOpen.value = true;
+  void loadMyDestructionPolicy().then((policy) => {
+    if (policy.exists) {
+      policyForm.minHours = policy.minScheduleAheadSeconds === null ? '' : String(policy.minScheduleAheadSeconds / 3600);
+      policyForm.maxHours = policy.maxScheduleAheadSeconds === null ? '' : String(policy.maxScheduleAheadSeconds / 3600);
+    }
+  }).catch(() => { });
+}
+
+async function submitPolicy() {
+  if (policySaving.value) return;
+  const minHours = Number(policyForm.minHours);
+  const maxHours = Number(policyForm.maxHours);
+  if ((policyForm.minHours !== '' && (!Number.isFinite(minHours) || minHours < 0))
+    || (policyForm.maxHours !== '' && (!Number.isFinite(maxHours) || maxHours < 0))
+    || (policyForm.minHours !== '' && policyForm.maxHours !== '' && minHours > maxHours)) {
+    errorMessage.value = '销毁窗口无效：需为不小于 0 的小时数，且最短不超过最长。';
+    return;
+  }
+  policySaving.value = true;
+  errorMessage.value = '';
+  try {
+    await saveMyDestructionPolicy({
+      minScheduleAheadSeconds: policyForm.minHours === '' ? null : Math.round(minHours * 3600),
+      maxScheduleAheadSeconds: policyForm.maxHours === '' ? null : Math.round(maxHours * 3600)
+    });
+    policyOpen.value = false;
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '保存失败';
+  } finally {
+    policySaving.value = false;
+  }
+}
+
 onMounted(() => { void loadKeys(); });
 </script>
 
@@ -66,7 +107,13 @@ onMounted(() => { void loadKeys(); });
         >
           新建密钥
         </button>
-        
+        <button
+          class="button-secondary"
+          type="button"
+          @click="openPolicy"
+        >
+          销毁政策
+        </button>
       </div>
     </header>
     <p
@@ -203,5 +250,52 @@ onMounted(() => { void loadKeys(); });
         </table>
       </div>
     </section>
+    <div
+      v-if="policyOpen"
+      class="dialog-backdrop"
+      @click.self="!policySaving && (policyOpen = false)"
+    >
+      <section
+        class="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="销毁窗口政策"
+      >
+        <form @submit.prevent="() => void submitPolicy()">
+          <h2>销毁窗口政策</h2>
+          <p class="kms-policy-hint">
+            设定"安排销毁"允许的时间范围，留空表示不限制。窗口内可随时取消销毁；
+            这是归属人自己的选择，服务端强制执行。
+          </p>
+          <label>最短提前量（小时）<input
+            v-model="policyForm.minHours"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="不限制"
+          ></label>
+          <label>最长提前量（小时）<input
+            v-model="policyForm.maxHours"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="不限制"
+          ></label>
+          <footer class="kms-dialog-actions">
+            <button
+              type="button"
+              class="button-secondary"
+              :disabled="policySaving"
+              @click="policyOpen = false"
+            >取消</button>
+            <button
+              type="submit"
+              class="button-primary"
+              :disabled="policySaving"
+            >{{ policySaving ? '保存中...' : '保存' }}</button>
+          </footer>
+        </form>
+      </section>
+    </div>
   </section>
 </template>

@@ -39,3 +39,4 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .confirm-dialog h2 { margin: 0; }
 .confirm-dialog label { display: grid; gap: 6px; font-size: 14px; color: var(--iam-color-text-secondary); text-align: left; }
 .kms-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.kms-policy-hint { color: var(--iam-color-text-secondary); font-size: 13px; line-height: 1.6; }
