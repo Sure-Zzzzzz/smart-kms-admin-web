@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { RefreshCw, Search } from 'lucide-vue-next';
 import { createKmsKey, listMyKmsKeys, loadMyDestructionPolicy, saveMyDestructionPolicy, type KmsKey } from '../api/kmsApi';
+import { hasKmsApiPermission } from '../kmsState';
 
 const keys = ref<KmsKey[]>([]);
+const total = ref(0);
 const loading = ref(false);
 const errorMessage = ref('');
 const filter = reactive({ alias: '', state: '' });
+const canManageKeys = computed(() => hasKmsApiPermission('kms.key.manage'));
+const canManageDestruction = computed(() => hasKmsApiPermission('kms.key.destroy'));
 
 const createOpen = ref(false);
 const creating = ref(false);
@@ -43,7 +48,9 @@ async function loadKeys() {
   loading.value = true;
   errorMessage.value = '';
   try {
-    keys.value = (await listMyKmsKeys({ page: 1, size: 100, alias: filter.alias || undefined, state: filter.state || undefined })).items;
+    const page = await listMyKmsKeys({ page: 1, size: 100, alias: filter.alias || undefined, state: filter.state || undefined });
+    keys.value = page.items;
+    total.value = page.total;
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '查询失败';
   } finally {
@@ -53,18 +60,22 @@ async function loadKeys() {
 
 const policyOpen = ref(false);
 const policySaving = ref(false);
+const policyLoading = ref(false);
 const policyForm = reactive({ minHours: '', maxHours: '' });
 
 function openPolicy() {
   policyForm.minHours = '';
   policyForm.maxHours = '';
   policyOpen.value = true;
+  // 回读完成前禁用保存：否则慢到的回读会覆盖用户已输入的编辑（含清空），
+  // 造成"清空保存实发旧值"的竞态
+  policyLoading.value = true;
   void loadMyDestructionPolicy().then((policy) => {
     if (policy.exists) {
       policyForm.minHours = policy.minScheduleAheadSeconds === null ? '' : String(policy.minScheduleAheadSeconds / 3600);
       policyForm.maxHours = policy.maxScheduleAheadSeconds === null ? '' : String(policy.maxScheduleAheadSeconds / 3600);
     }
-  }).catch(() => { });
+  }).catch(() => { }).finally(() => { policyLoading.value = false; });
 }
 
 async function submitPolicy() {
@@ -101,6 +112,7 @@ onMounted(() => { void loadKeys(); });
       <div><span>个人工作区</span><h1>我的密钥</h1></div>
       <div class="kms-header-actions">
         <button
+          v-if="canManageKeys"
           class="button-primary"
           type="button"
           @click="openCreate"
@@ -108,6 +120,7 @@ onMounted(() => { void loadKeys(); });
           新建密钥
         </button>
         <button
+          v-if="canManageDestruction"
           class="button-secondary"
           type="button"
           @click="openPolicy"
@@ -121,7 +134,16 @@ onMounted(() => { void loadKeys(); });
       class="kms-message danger"
       role="alert"
     >
-      {{ errorMessage }}
+      <span>{{ errorMessage }}</span>
+      <button
+        type="button"
+        class="button-secondary kms-retry-button"
+        :disabled="loading"
+        @click="() => void loadKeys()"
+      >
+        <RefreshCw :size="15" aria-hidden="true" />
+        重试
+      </button>
     </p>
     <div
       v-if="createOpen"
@@ -216,14 +238,15 @@ onMounted(() => { void loadKeys(); });
         :disabled="loading"
         @click="() => void loadKeys()"
       >
+        <Search :size="16" aria-hidden="true" />
         查询
       </button>
     </div>
     <section class="admin-data-surface">
       <div class="kms-surface-header">
-        <h2>归属于我的密钥</h2><span>{{ keys.length }} 项</span>
+        <div><h2>归属于我的密钥</h2><span>仅显示当前主体可见的归属</span></div><span>{{ total }} 项</span>
       </div>
-      <div class="kms-table-wrap">
+      <div class="kms-table-wrap" :aria-busy="loading">
         <table class="responsive-table">
           <thead><tr><th>别名</th><th>用途</th><th>算法</th><th>状态</th><th>活动版本</th></tr></thead>
           <tbody>
@@ -238,12 +261,15 @@ onMounted(() => { void loadKeys(); });
                 >{{ key.state }}</span>
               </td><td>{{ key.activeVersion ?? '-' }}</td>
             </tr>
-            <tr v-if="!loading && keys.length === 0">
+            <tr v-if="loading">
+              <td colspan="5" class="kms-empty">正在加载密钥...</td>
+            </tr>
+            <tr v-else-if="keys.length === 0">
               <td
                 colspan="5"
                 class="kms-empty"
               >
-                暂无密钥，点击右上角「新建密钥」创建第一把
+                {{ filter.alias || filter.state ? '当前筛选条件下没有匹配的密钥' : canManageKeys ? '暂无密钥，点击右上角「新建密钥」创建第一把' : '暂无密钥' }}
               </td>
             </tr>
           </tbody>
@@ -291,8 +317,8 @@ onMounted(() => { void loadKeys(); });
             <button
               type="submit"
               class="button-primary"
-              :disabled="policySaving"
-            >{{ policySaving ? '保存中...' : '保存' }}</button>
+              :disabled="policySaving || policyLoading"
+            >{{ policySaving || policyLoading ? '保存中...' : '保存' }}</button>
           </footer>
         </form>
       </section>
