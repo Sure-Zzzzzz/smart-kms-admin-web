@@ -1,9 +1,29 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { cancelKmsDestruction, changeKmsKeyState, createKmsKey, listAdminKmsKeys, rotateKmsKey, scheduleKmsDestruction, type KmsKey } from '../api/kmsApi';
+import { watch } from 'vue';
+import { cancelKmsDestruction, changeKmsKeyState, createKmsKey, getOwnerDestructionPolicy, listAdminKmsKeys, rotateKmsKey, scheduleKmsDestruction, type KmsKey, type KmsOwnerDestructionPolicy } from '../api/kmsApi';
 
 const keys = ref<KmsKey[]>([]);
 const selected = ref<KmsKey | null>(null);
+const ownerPolicy = ref<KmsOwnerDestructionPolicy | null>(null);
+
+function policyWindowHint(): string {
+  if (!ownerPolicy.value || !ownerPolicy.value.exists) return '';
+  const min = ownerPolicy.value.minScheduleAheadSeconds;
+  const max = ownerPolicy.value.maxScheduleAheadSeconds;
+  if (min === null && max === null) return '';
+  const fmt = (seconds: number | null) => seconds === null ? null : (seconds % 3600 === 0 ? `${seconds / 3600} 小时` : `${Math.round(seconds / 60)} 分钟`);
+  const parts: string[] = [];
+  if (min !== null) parts.push(`不早于 ${fmt(min)} 后`);
+  if (max !== null) parts.push(`不晚于 ${fmt(max)} 内`);
+  return `该归属人的销毁窗口：${parts.join('，')}（越窗将被拒绝）`;
+}
+
+watch(selected, (key) => {
+  ownerPolicy.value = null;
+  if (!key?.ownerPrincipalId) return;
+  void getOwnerDestructionPolicy(key.ownerPrincipalId).then((policy) => { ownerPolicy.value = policy; }).catch(() => { });
+});
 const loading = ref(false);
 const submitting = ref(false);
 const errorMessage = ref('');
@@ -234,6 +254,10 @@ onMounted(() => { void loadKeys(); });
         class="kms-destruction-action"
       >
         <template v-if="canSchedule">
+          <span
+            v-if="policyWindowHint()"
+            class="kms-policy-hint"
+          >{{ policyWindowHint() }}</span>
           <input
             v-model="destructionDueAt"
             type="datetime-local"
