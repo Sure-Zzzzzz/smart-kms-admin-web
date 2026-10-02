@@ -6,8 +6,8 @@
 
 1. 本地 gitignored `.env` 设置 `VITE_KMS_PKCE_CLIENT_ID=kms-portal-web`。
 2. 执行 `pnpm build` 生成 `dist/`。
-3. 以 `deploy/nginx.conf` 和 `dist/` 启动 KMS Nginx 容器，映射本机 `8098` 到容器 `80`。
-4. `iam-local-lb` 配置 `/app/kms/` 与 `/api/kms/` 到 `8098` 的转发规则并 reload。统一入口的 `/oauth2/` 保持归 IAM，不在 KMS Nginx 中复制。
+3. KMS 走查宿主固定 `8390`（`application-walkthrough.yml`）；前端 `dist/` 由 `iam-local-lb` 直接挂载，`/api/kms/` 转发到 `host.docker.internal:8390`。
+4. `iam-local-lb` 配置 `/app/kms/` 静态与 `/api/kms/` 到 `8390` 的转发规则并 reload。统一入口的 `/oauth2/` 保持归 IAM。
 
 ## IAM 注册与投影
 
