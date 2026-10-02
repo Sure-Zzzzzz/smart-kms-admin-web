@@ -57,7 +57,7 @@ onMounted(() => { void loadKeys(); });
         <label>主体标识<input
           v-model.trim="form.principalId"
           required
-          placeholder="iam:人员ID / aksk:客户端ID / app:应用代码"
+          placeholder="iam:人员ID / aksk:客户端ID"
         ></label><label>版本<input
           v-model="form.keyVersion"
           type="number"
