@@ -67,11 +67,6 @@ export function clearKmsAccessToken() {
   remove(ACCESS_TOKEN_EXPIRES_AT_KEY);
 }
 
-export function hasValidKmsAccessToken() {
-  const expiry = readNumber(ACCESS_TOKEN_EXPIRES_AT_KEY);
-  return Boolean(read(ACCESS_TOKEN_KEY)) && Number.isFinite(expiry) && Date.now() < expiry - TOKEN_EXPIRY_SKEW_MS;
-}
-
 async function authorizeUrl(target: string) {
   const state = random();
   const verifier = random();
