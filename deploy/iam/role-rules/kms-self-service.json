@@ -1,5 +1,5 @@
 {
   "pagePermissions": [ "kms.page.my-keys" ],
-  "apiPermissions": [ "kms.me.read", "kms.key.read" ],
+  "apiPermissions": [ "kms.me.read", "kms.key.read", "kms.key.manage" ],
   "dataGrantTemplate": null
 }
