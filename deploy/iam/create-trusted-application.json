@@ -5,13 +5,13 @@
   "icon": "key",
   "portal": {
     "enabled": true,
-    "entry": "https://iam.zs.com/app/kms/index.html",
-    "apiBase": "https://iam.zs.com/api/kms",
-    "menus": [
-      { "code": "my-keys", "name": "我的密钥", "route": "/my-keys", "sortOrder": 1 },
-      { "code": "keys", "name": "密钥管理", "route": "/keys", "sortOrder": 2 },
-      { "code": "policies", "name": "策略", "route": "/policies", "sortOrder": 3 },
-      { "code": "destruction", "name": "销毁任务", "route": "/destruction", "sortOrder": 4 }
+    "entry": "https://iam.example.com/app/kms/index.html",
+    "apiBase": "https://iam.example.com/api/kms",
+    "menuTree": [
+      { "code": "my-keys", "name": "我的密钥", "nodeType": "PAGE", "route": "/my-keys", "requiredPagePermission": "kms.page.my-keys", "sortOrder": 1, "children": [] },
+      { "code": "keys", "name": "密钥管理", "nodeType": "PAGE", "route": "/keys", "requiredPagePermission": "kms.page.keys", "sortOrder": 2, "children": [] },
+      { "code": "policies", "name": "策略", "nodeType": "PAGE", "route": "/policies", "requiredPagePermission": "kms.page.policies", "sortOrder": 3, "children": [] },
+      { "code": "destruction", "name": "销毁任务", "nodeType": "PAGE", "route": "/destruction", "requiredPagePermission": "kms.page.destruction", "sortOrder": 4, "children": [] }
     ]
   },
   "initialClient": {
@@ -19,7 +19,7 @@
     "clientName": "KMS Portal PKCE",
     "clientType": "PUBLIC",
     "requireConsent": false,
-    "redirectUris": [ "https://iam.zs.com/app/kms/oauth-callback" ],
+    "redirectUris": [ "https://iam.example.com/app/kms/oauth-callback" ],
     "scopes": [ "openid", "profile" ],
     "grantTypes": [ "authorization_code" ],
     "authenticationMethods": [ "none" ]

@@ -1,0 +1,18 @@
+html {
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  background: #edf0f2;
+}
+
+body { margin: 0; }
+
+#fixture-header {
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 14px 20px;
+  color: #17212b;
+  background: #ffffff;
+  border-bottom: 1px solid #cbd4dc;
+}
+
+#micro-app { min-width: 0; }
+#fixture-error { padding: 20px; }

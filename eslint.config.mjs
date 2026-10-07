@@ -3,7 +3,7 @@ import vue from 'eslint-plugin-vue';
 import tseslint from 'typescript-eslint';
 import vueParser from 'vue-eslint-parser';
 
-const browserGlobals = { window: 'readonly', document: 'readonly', crypto: 'readonly', btoa: 'readonly', URLSearchParams: 'readonly', TextEncoder: 'readonly', HTMLElement: 'readonly', Event: 'readonly' };
+const browserGlobals = { window: 'readonly', document: 'readonly', navigator: 'readonly', crypto: 'readonly', btoa: 'readonly', URLSearchParams: 'readonly', TextEncoder: 'readonly', HTMLElement: 'readonly', Event: 'readonly', AbortController: 'readonly' };
 
 export default [
   js.configs.recommended,

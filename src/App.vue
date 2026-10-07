@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { RouterView } from 'vue-router';
 import { hasKmsPagePermission, kmsState } from './kmsState';
+import { useKmsModals } from './composables/useKmsModals';
 
+const root = ref<HTMLElement | null>(null);
+useKmsModals(root);
 const standalone = computed(() => !kmsState.bridge);
 const menus = [
   { to: '/my-keys', label: '我的密钥', permission: 'kms.page.my-keys' },
@@ -13,7 +16,11 @@ const menus = [
 </script>
 
 <template>
-  <section class="kms-admin-app">
+  <section
+    ref="root"
+    class="kms-admin-app"
+    :class="{ 'kms-admin-app--standalone': standalone }"
+  >
     <!-- 门户 qiankun 形态：应用菜单已由门户侧栏承载，子应用只渲染内容区；
          standalone（独立调试/直开）形态才渲染自有导航壳 -->
     <header
@@ -30,7 +37,7 @@ const menus = [
           :key="item.to"
           :to="item.to"
         >
-{{ item.label }}
+          {{ item.label }}
         </RouterLink>
       </nav>
     </header>

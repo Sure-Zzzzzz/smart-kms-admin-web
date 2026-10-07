@@ -1,13 +1,13 @@
 {
   "pagePermissions": [ "kms.page.my-keys", "kms.page.keys", "kms.page.policies", "kms.page.destruction" ],
-  "apiPermissions": [ "kms.me.read", "kms.key.read", "kms.key.manage", "kms.key.policy", "kms.key.destroy" ],
+  "apiPermissions": [ "kms.me.read", "kms.key.read", "kms.key.manage", "kms.key.policy", "kms.key.destroy", "kms.read-public-key" ],
   "dataGrantTemplate": {
     "protocol": "simple-data-permission",
     "version": "1.0",
     "grants": [
       {
         "resource": "kms-key",
-      "actions": [ "read", "manage", "policy", "destroy" ],
+        "actions": [ "read", "manage", "policy", "destroy" ],
         "all": true,
         "constraints": []
       }

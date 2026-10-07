@@ -3,7 +3,6 @@ const ACCESS_TOKEN_KEY = 'kms.accessToken';
 const ACCESS_TOKEN_EXPIRES_AT_KEY = 'kms.accessTokenExpiresAt';
 const LAST_AUTH_AT_KEY = 'kms.lastAuthAt';
 const RETRY_COUNT_KEY = 'kms.pkce.retry';
-const TOKEN_EXPIRY_SKEW_MS = 60_000;
 const REAUTH_MIN_INTERVAL_MS = 60_000;
 
 export class KmsPkceError extends Error {
@@ -60,7 +59,15 @@ async function challenge(verifier: string) {
   return encode(new Uint8Array(digest));
 }
 
-export function getKmsAccessToken() { return read(ACCESS_TOKEN_KEY); }
+export function getKmsAccessToken() {
+  const token = read(ACCESS_TOKEN_KEY);
+  const expiresAt = readNumber(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  if (!token?.trim() || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    clearKmsAccessToken();
+    return null;
+  }
+  return token;
+}
 
 export function clearKmsAccessToken() {
   remove(ACCESS_TOKEN_KEY);
@@ -78,15 +85,21 @@ async function authorizeUrl(target: string) {
   return `/oauth2/authorize?${search.toString()}`;
 }
 
-export async function beginKmsAuthorization(target = '/') {
+export async function beginKmsAuthorization(target = '/', signal?: AbortSignal) {
+  signal?.throwIfAborted();
+  const token = getKmsAccessToken();
   const last = readNumber(LAST_AUTH_AT_KEY);
   if (Number.isFinite(last) && Date.now() - last < REAUTH_MIN_INTERVAL_MS) {
     throw new KmsPkceError('刚刚完成授权仍无法通过校验，请重新从统一应用门户进入');
   }
-  window.location.assign(await authorizeUrl(target));
+  const url = await authorizeUrl(target);
+  signal?.throwIfAborted();
+  if (getKmsAccessToken() !== token) return;
+  window.location.assign(url);
 }
 
-export async function handleKmsOAuthCallback(): Promise<KmsCallbackOutcome> {
+export async function handleKmsOAuthCallback(signal?: AbortSignal): Promise<KmsCallbackOutcome> {
+  signal?.throwIfAborted();
   const params = new URLSearchParams(window.location.search);
   if (params.get('error')) throw new KmsPkceError(`授权失败：${params.get('error')}`);
   const code = params.get('code');
@@ -99,30 +112,40 @@ export async function handleKmsOAuthCallback(): Promise<KmsCallbackOutcome> {
   try {
     const value = stored ? JSON.parse(stored) as { verifier?: string; target?: string } : null;
     verifier = typeof value?.verifier === 'string' ? value.verifier : '';
-    target = typeof value?.target === 'string' && value.target.startsWith('/') ? value.target : '/';
+    target = typeof value?.target === 'string'
+      && value.target.startsWith('/')
+      && !value.target.startsWith('//')
+      && !value.target.includes('\\') ? value.target : '/';
   } catch { /* 非法状态值按缺少 verifier 处理 */ }
-  if (!verifier) return retry(target);
+  if (!verifier) return retry(target, signal);
   const response = await window.fetch('/oauth2/token', {
-    method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    method: 'POST', credentials: 'omit', signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: redirectUri(), client_id: clientId(), code_verifier: verifier }).toString()
   });
-  if (!response.ok) return retry(target);
-  const payload = await response.json() as { access_token?: string; expires_in?: number };
-  if (!payload.access_token) return retry(target);
-  write(ACCESS_TOKEN_KEY, payload.access_token);
-  write(ACCESS_TOKEN_EXPIRES_AT_KEY, String(Date.now() + (payload.expires_in || 3600) * 1000));
+  signal?.throwIfAborted();
+  if (!response.ok) return retry(target, signal);
+  const payload: unknown = await response.json();
+  signal?.throwIfAborted();
+  if (!payload || typeof payload !== 'object') return retry(target, signal);
+  const { access_token: token, expires_in: expiry } = payload as Record<string, unknown>;
+  const expiresIn = expiry === undefined ? 3600 : expiry;
+  if (typeof token !== 'string' || !token.trim()
+    || typeof expiresIn !== 'number' || !Number.isFinite(expiresIn) || expiresIn <= 0
+    || !Number.isFinite(Date.now() + expiresIn * 1000)) return retry(target, signal);
+  write(ACCESS_TOKEN_KEY, token);
+  write(ACCESS_TOKEN_EXPIRES_AT_KEY, String(Date.now() + expiresIn * 1000));
   write(LAST_AUTH_AT_KEY, String(Date.now()));
   remove(RETRY_COUNT_KEY);
   return { kind: 'authorized', target };
 }
 
-async function retry(target: string): Promise<KmsCallbackOutcome> {
+async function retry(target: string, signal?: AbortSignal): Promise<KmsCallbackOutcome> {
   const attempts = readNumber(RETRY_COUNT_KEY);
   if (Number.isFinite(attempts) && attempts >= 1) {
     remove(RETRY_COUNT_KEY);
     throw new KmsPkceError('令牌交换失败，请重新从统一应用门户进入');
   }
   write(RETRY_COUNT_KEY, '1');
-  await beginKmsAuthorization(target);
+  await beginKmsAuthorization(target, signal);
   return { kind: 'retrying' };
 }

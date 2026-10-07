@@ -1,5 +1,5 @@
 {
   "code": "kms-self-service",
   "name": "KMS 普通用户",
-  "description": "仅查看当前认证主体归属的 KMS 密钥。"
+  "description": "按角色 API 授权创建和管理当前认证主体归属的密钥、配置本人销毁政策、查看销毁进度及本人公钥。"
 }
