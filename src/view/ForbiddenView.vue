@@ -12,9 +12,9 @@ import PageHeader from '@sure-zzzzzz/simple-iam-theme-contract/PageHeader';
       title="无权访问"
       description="当前身份没有访问此页面的权限。"
     />
-    <div class="kms-empty-state">
+    <div class="admin-empty-state">
       <ShieldAlert
-        class="kms-empty-state-icon"
+        class="admin-empty-state-icon"
         aria-hidden="true"
       />
       <h2>权限不足</h2>

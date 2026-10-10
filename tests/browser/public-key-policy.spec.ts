@@ -12,7 +12,7 @@ for (const state of ['ACTIVE', 'DISABLED']) {
       { keyRef: 'browser-key-001', version: 2, algorithm: 'ES256', state: 'ACTIVE', publicKey: 'CurrentPublicKey'.repeat(12) }
     ];
     await mount(page);
-    await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+    await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
     const publicKeys = page.getByRole('region', { name: '公钥', exact: true });
     await expect(publicKeys.getByRole('textbox', { name: '公钥值', exact: true })).toHaveValue(mock.publicKeys[1]!.publicKey);
     await publicKeys.getByRole('button', { name: '公钥版本', exact: true }).click();
@@ -33,7 +33,7 @@ for (const status of [403, 503]) {
   test(`本人公钥${status}拒绝可重试且不跳旧接口或创建策略`, async ({ page, mock }) => {
     mock.publicKeyStatus = status;
     await mount(page);
-    await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+    await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
     const publicKeys = page.getByRole('region', { name: '公钥', exact: true });
     const error = publicKeys.getByRole('alert');
     await expect(error).toContainText(status === 403 ? '公钥读取被拒绝，请确认当前账号仍有读取本人公钥的权限' : 'HTTP 503');
@@ -54,7 +54,7 @@ test('SERVICE主体不能使用本人公钥页面入口，后端仍返回403', a
   mock.principalId = 'aksk:browser-service';
   mock.keys[0]!.ownerPrincipalId = mock.principalId;
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const publicKeys = page.getByRole('region', { name: '公钥', exact: true });
   await expect(publicKeys).toContainText('本人公钥查看仅供人员身份使用');
   expect(mock.reads.some(path => path.endsWith('/public-keys'))).toBe(false);
@@ -69,7 +69,7 @@ test('SERVICE主体不能使用本人公钥页面入口，后端仍返回403', a
 test('缺公钥API时不请求公钥，服务端不因本人归属放行', async ({ page, mock }) => {
   mock.scopes = ['kms.me.read', 'kms.key.read'];
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   await expect(page.getByRole('region', { name: '公钥', exact: true })).toContainText('没有读取公钥的权限');
   expect(mock.reads.some(path => path.includes('/public-key'))).toBe(false);
   const status = await page.evaluate(async () => (await fetch('/api/kms/me/keys/browser-key-001/public-keys', {
@@ -110,7 +110,7 @@ for (const state of ['PENDING_DESTRUCTION', 'DESTROYED']) {
   test(`${state}密钥详情不再发公钥请求`, async ({ page, mock }) => {
     mock.keys = [createKey(state)];
     await mount(page);
-    await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+    await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
     const publicKeys = page.getByRole('region', { name: '公钥', exact: true });
     await expect(publicKeys).toContainText('不再提供公钥');
     await expect(publicKeys.getByRole('textbox', { name: '公钥值', exact: true })).toHaveCount(0);

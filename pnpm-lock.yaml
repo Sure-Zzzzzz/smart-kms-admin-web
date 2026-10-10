@@ -12,8 +12,8 @@ importers:
         specifier: link:../simple-frontend-contract/packages/frontend-contract
         version: link:../simple-frontend-contract/packages/frontend-contract
       '@sure-zzzzzz/simple-iam-theme-contract':
-        specifier: 1.0.3
-        version: 1.0.3(vue@3.5.13(typescript@5.7.3))
+        specifier: 1.0.5
+        version: 1.0.5(vue@3.5.13(typescript@5.7.3))
       lucide-vue-next:
         specifier: 1.0.0
         version: 1.0.0(vue@3.5.13(typescript@5.7.3))
@@ -662,8 +662,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@sure-zzzzzz/simple-iam-theme-contract@1.0.3':
-    resolution: {integrity: sha512-WFFMJ7YsWrfme+gN6OZwApq/M7ZyTB2kd14tOe0xwi14CPBs2opTsKsUrqlKV33zLZcP1iII3J9ZDG9Lwq1vjg==}
+  '@sure-zzzzzz/simple-iam-theme-contract@1.0.5':
+    resolution: {integrity: sha512-YiJSNFF276Me9LaKmy8kLnWZtHSvEHKyWmvP7IGa1l9FsvduOnK7VE6admcKNqR8wilPxy1arPhLNqAxMRcVoQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       vue: ^3.5.0
@@ -2233,7 +2233,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.63.1':
     optional: true
 
-  '@sure-zzzzzz/simple-iam-theme-contract@1.0.3(vue@3.5.13(typescript@5.7.3))':
+  '@sure-zzzzzz/simple-iam-theme-contract@1.0.5(vue@3.5.13(typescript@5.7.3))':
     dependencies:
       vue: 3.5.13(typescript@5.7.3)
 

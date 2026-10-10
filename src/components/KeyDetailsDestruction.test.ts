@@ -36,7 +36,7 @@ function render(mode: 'self' | 'governance' = 'self') {
   wrapper = mount(KeyDetails, { props: { keyRef: 'mine', initialKey: pendingKey, mode }, global: { stubs: { KeyPublicKeys: true } } });
 }
 function button(name: string) { return wrapper.findAll('button').find(node => node.text() === name)!; }
-async function confirm() { await wrapper.get('[role="alertdialog"] .button-danger').trigger('click'); await flushPromises(); }
+async function confirm() { await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click'); await flushPromises(); }
 beforeEach(() => {
   vi.resetAllMocks();
   current = { ...pendingKey };
@@ -135,7 +135,7 @@ describe('销毁进度与状态恢复', () => {
     kmsState.me!.scopes = ['kms.key.manage', 'kms.key.destroy'];
     await nextTick();
     expect(wrapper.get('h2').text()).toBe('密钥详情');
-    expect(wrapper.find('.kms-facts').exists()).toBe(false);
+    expect(wrapper.find('.detail-list').exists()).toBe(false);
     expect(wrapper.find('[aria-label="销毁进度"]').exists()).toBe(false);
     kmsState.me!.scopes = ['kms.key.read', 'kms.key.destroy'];
     cancelEligible = false;
@@ -189,7 +189,7 @@ describe('销毁进度与状态恢复', () => {
     render();
     await flushPromises();
     await button('取消销毁').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     kmsState.me!.scopes = ['kms.key.read'];
     await nextTick();
     expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false);
@@ -197,11 +197,11 @@ describe('销毁进度与状态恢复', () => {
     kmsState.me!.scopes = ['kms.key.read', 'kms.key.destroy'];
     await nextTick();
     await button('取消销毁').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     oldWrite.resolve();
     await flushPromises();
     expect(wrapper.emitted('changed')).toBeUndefined();
-    expect(wrapper.get('[role="alertdialog"] .button-danger').attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').attributes('disabled')).toBeDefined();
     expect(api.cancelMyKmsDestruction.mock.calls[0][2]).not.toBe(api.cancelMyKmsDestruction.mock.calls[1][2]);
     current = { ...current, state: 'ACTIVE', rowVersion: 4 };
     cancelEligible = false;

@@ -23,7 +23,7 @@ test('仅我的密钥页面完成详情、启停、轮换、政策关联和安�
   mock.scopes = [...selfServiceScopes];
   mock.dataAccess = null;
   await mount(page);
-  const entry = page.getByRole('button', { name: '查看订单签名密钥详情', exact: true });
+  const entry = page.getByRole('button', { name: '打开订单签名密钥详情', exact: true });
   await entry.focus();
   await page.keyboard.press('Enter');
   const details = page.getByRole('region', { name: '密钥详情', exact: true });
@@ -37,7 +37,7 @@ test('仅我的密钥页面完成详情、启停、轮换、政策关联和安�
   await confirmOperation(page, '启用', '启用密钥');
   await expect(details.getByRole('button', { name: '轮换', exact: true })).toBeEnabled();
   await confirmOperation(page, '轮换', '轮换密钥');
-  await expect(details.locator('.kms-facts > div').filter({ has: page.getByText('活动版本', { exact: true }) })).toContainText('2');
+  await expect(details.locator('.detail-list dt:has-text("活动版本") + dd')).toHaveText('2');
   await expect(details.getByRole('region', { name: '公钥', exact: true }).getByRole('button', { name: '公钥版本', exact: true })).toContainText('版本 2');
 
   const policy = details.getByRole('region', { name: '归属人销毁政策', exact: true });
@@ -62,7 +62,7 @@ test('仅我的密钥页面完成详情、启停、轮换、政策关联和安�
   await expectNoPageOverflow(page);
   await page.screenshot({ path: testInfo.outputPath('self-service-policy-details.png'), fullPage: true });
   await confirmOperation(page, '安排销毁', '安排销毁');
-  await expect(details).toContainText('PENDING_DESTRUCTION');
+  await expect(details).toContainText('待销毁');
   await expect(details.getByRole('region', { name: '公钥', exact: true }).getByRole('textbox', { name: '公钥值', exact: true })).toHaveCount(0);
   await expect(details.getByRole('region', { name: '销毁进度', exact: true })).toContainText('等待执行');
   await confirmOperation(page, '取消销毁', '取消销毁任务');
@@ -96,7 +96,7 @@ test('我的密钥只读主体能读详情，缺少管理和公钥权限不发�
   mock.pagePermissions = ['kms.page.my-keys'];
   mock.scopes = ['kms.me.read', 'kms.key.read'];
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const details = page.getByRole('region', { name: '密钥详情', exact: true });
   await expect(details).toContainText('browser-key-001');
   await expect(details.getByRole('button', { name: /^(停用|启用|轮换|安排销毁|取消销毁|修改销毁政策)$/ })).toHaveCount(0);
@@ -111,7 +111,7 @@ test('详情数据权限拒绝不泄露密钥，重新读取可恢复', async ({
   mock.pagePermissions = ['kms.page.my-keys'];
   mock.keyDetailStatus = 403;
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const details = page.getByRole('region', { name: '密钥详情', exact: true });
   await expect(details.getByRole('alert')).toContainText('没有执行该操作的权限');
   await expect(details).not.toContainText('browser-key-001');
@@ -134,7 +134,7 @@ test('ES256 公钥权限拒绝可重试，历史版本键盘可选且复制不�
   ];
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const publicKey = page.getByRole('region', { name: '公钥', exact: true });
   await expect(publicKey.getByRole('alert')).toContainText('公钥读取被拒绝，请确认当前账号仍有读取本人公钥的权限');
   await expect(publicKey.getByRole('alert')).not.toContainText('策略');
@@ -170,7 +170,7 @@ test('ES256 公钥权限拒绝可重试，历史版本键盘可选且复制不�
 test('AES 对称密钥没有公钥查看入口或公钥请求', async ({ page, mock }) => {
   mock.keys = [{ ...createKey(), purpose: 'ENCRYPT', algorithm: 'AES_256_GCM' }];
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const publicKey = page.getByRole('region', { name: '公钥', exact: true });
   await expect(publicKey).toContainText('没有公钥');
   await expect(publicKey.getByRole('button', { name: '公钥版本', exact: true })).toHaveCount(0);
@@ -184,7 +184,7 @@ test('轮换服务失败保留确认，重试沿用幂等键并更新详情版�
   mock.pagePermissions = ['kms.page.my-keys'];
   mock.rotationStatus = 503;
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const details = page.getByRole('region', { name: '密钥详情', exact: true });
   await details.getByRole('button', { name: '轮换', exact: true }).click();
   const dialog = page.getByRole('alertdialog', { name: '轮换密钥', exact: true });
@@ -193,7 +193,7 @@ test('轮换服务失败保留确认，重试沿用幂等键并更新详情版�
   mock.rotationStatus = 200;
   await dialog.getByRole('button', { name: '轮换', exact: true }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(details.locator('.kms-facts > div').filter({ has: page.getByText('活动版本', { exact: true }) })).toContainText('2');
+  await expect(details.locator('.detail-list dt:has-text("活动版本") + dd')).toHaveText('2');
   expect(mock.writes).toEqual([
     { method: 'POST', path: '/me/keys/browser-key-001/versions', body: { expectedRowVersion: 1 } },
     { method: 'POST', path: '/me/keys/browser-key-001/versions', body: { expectedRowVersion: 1 } }
@@ -206,7 +206,7 @@ test('轮换服务失败保留确认，重试沿用幂等键并更新详情版�
 test('生命周期并发冲突清空旧详情，重新读取和确认使用最新资源版本', async ({ page, mock }) => {
   mock.pagePermissions = ['kms.page.my-keys'];
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const details = page.getByRole('region', { name: '密钥详情', exact: true });
   await expect(details.getByRole('button', { name: '轮换', exact: true })).toBeEnabled();
   mock.keys[0]!.rowVersion = 9;
@@ -217,7 +217,7 @@ test('生命周期并发冲突清空旧详情，重新读取和确认使用最�
   await expect(details.getByRole('button', { name: '重新读取详情', exact: true })).toHaveCount(0);
   await expect(details.getByRole('button', { name: '轮换', exact: true })).toBeEnabled();
   await confirmOperation(page, '轮换', '轮换密钥');
-  await expect(details.locator('.kms-facts > div').filter({ has: page.getByText('活动版本', { exact: true }) })).toContainText('2');
+  await expect(details.locator('.detail-list dt:has-text("活动版本") + dd')).toHaveText('2');
   expect(mock.writes).toEqual([
     { method: 'POST', path: '/me/keys/browser-key-001/versions', body: { expectedRowVersion: 1 } },
     { method: 'POST', path: '/me/keys/browser-key-001/versions', body: { expectedRowVersion: 9 } }

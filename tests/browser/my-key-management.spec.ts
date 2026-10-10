@@ -35,7 +35,7 @@ test('五项自助API权限和DATA=null完成新建、启停、轮换、政策�
   await expect(details.getByRole('button', { name: '启用', exact: true })).toBeEnabled();
   await confirmOperation(page, '启用');
   await confirmOperation(page, '轮换');
-  await expect(details.locator('.kms-facts > div').filter({ has: page.getByText('活动版本', { exact: true }) })).toContainText('2');
+  await expect(details.locator('.detail-list dt:has-text("活动版本") + dd')).toHaveText('2');
   await details.getByRole('button', { name: '修改销毁政策', exact: true }).click();
   const policyDialog = page.getByRole('dialog', { name: '销毁窗口政策', exact: true });
   await policyDialog.getByRole('spinbutton', { name: '最短提前量（小时）', exact: true }).fill('12');
@@ -46,7 +46,7 @@ test('五项自助API权限和DATA=null完成新建、启停、轮换、政策�
   const dueAt = await futureLocalTime(page, 24);
   await details.getByLabel('销毁时间', { exact: true }).fill(dueAt);
   await confirmOperation(page, '安排销毁');
-  await expect(details).toContainText('PENDING_DESTRUCTION');
+  await expect(details).toContainText('待销毁');
   await confirmOperation(page, '取消销毁');
   await expect(details.getByRole('button', { name: '停用', exact: true })).toBeEnabled();
   expect(mock.writes).toEqual([
@@ -67,7 +67,7 @@ test('五项自助API权限和DATA=null完成新建、启停、轮换、政策�
 test('治理模式对他人密钥使用旧管理写接口，成功后回读治理详情', async ({ page, mock }) => {
   mock.keys = [{ ...createKey(), ownerPrincipalId: 'iam:other', keyAlias: '治理密钥' }];
   await mount(page, 'keys');
-  await page.getByRole('button', { name: '查看治理密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开治理密钥详情', exact: true }).click();
   const details = page.getByRole('region', { name: '密钥详情', exact: true });
   await expect(details).toContainText('iam:other');
   await expect(details.getByRole('button', { name: '修改销毁政策', exact: true })).toHaveCount(0);
@@ -97,7 +97,7 @@ for (const failure of ['before', 'after'] as const) {
     mock.dataAccess = null;
     mock.rotationNetworkFailure = failure;
     await mount(page);
-    await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+    await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
     const details = page.getByRole('region', { name: '密钥详情', exact: true });
     await details.getByRole('button', { name: '轮换', exact: true }).click();
     const dialog = page.getByRole('alertdialog', { name: '轮换密钥', exact: true });
@@ -106,7 +106,7 @@ for (const failure of ['before', 'after'] as const) {
     expect(mock.keys[0]!.activeVersion).toBe(failure === 'before' ? 1 : 2);
     await dialog.getByRole('button', { name: '轮换', exact: true }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(details.locator('.kms-facts > div').filter({ has: page.getByText('活动版本', { exact: true }) })).toContainText('2');
+    await expect(details.locator('.detail-list dt:has-text("活动版本") + dd')).toHaveText('2');
     expect(mock.writes).toEqual([
       { method: 'POST', path: '/me/keys/browser-key-001/versions', body: { expectedRowVersion: 1 } },
       { method: 'POST', path: '/me/keys/browser-key-001/versions', body: { expectedRowVersion: 1 } }
@@ -122,7 +122,7 @@ for (const mode of ['self', 'governance'] as const) {
     test(`${mode}模式${action}权限被撤销时不回退写接口，恢复授权后沿原入口重试`, async ({ page, mock }) => {
       mock.dataAccess = mode === 'self' ? null : 'all';
       await mount(page, mode === 'self' ? 'my-keys' : 'keys');
-      await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+      await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
       const details = page.getByRole('region', { name: '密钥详情', exact: true });
       if (action === '安排销毁') await details.getByLabel('销毁时间', { exact: true }).fill(await futureLocalTime(page, 24));
       await details.getByRole('button', { name: action, exact: true }).click();

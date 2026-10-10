@@ -14,7 +14,7 @@ const health: KmsWorkerHealth = {
   consecutiveFailureCount: 0, oldestOverdueDelayMillis: null
 };
 const jobs: KmsDestructionJob[] = [
-  { ownerPrincipalId: 'iam:1000000000000001', ownerDisplayName: '目录-展示用户', keyRef: 'key-1', keyVersion: 1, state: 'COMPLETED', dueAt: '2026-01-01T12:00:00Z', claimUntil: null, attemptCount: 2, completedAt: null },
+  { ownerPrincipalId: 'iam:1000000000000001', ownerDisplayName: '目录-展示用户', keyRef: 'key-1', keyVersion: 1, state: 'COMPLETED', dueAt: '2026-01-01T12:00:00Z', claimUntil: null, attemptCount: 2, completedAt: '2026-01-01T14:00:00Z' },
   { ownerPrincipalId: 'aksk:AKPPTEST0000000001', keyRef: 'key-2', keyVersion: 2, state: 'CLAIMED', dueAt: '2026-01-01T12:00:00Z', claimUntil: '2026-01-01T13:00:00Z', attemptCount: 1, completedAt: null },
   { keyRef: 'key-3', keyVersion: 1, state: 'PENDING', dueAt: '2026-01-01T12:00:00Z', claimUntil: null, attemptCount: 0, completedAt: null }
 ];
@@ -64,7 +64,7 @@ describe('销毁任务页面', () => {
     expect(wrapper.text()).toContain('Worker 未运行');
     setKmsMe(null);
     await flushPromises();
-    expect(wrapper.get('tbody').text()).not.toContain('next-key');
+    expect(wrapper.text()).not.toContain('next-key');
     expect(wrapper.text()).toContain('暂未取得 Worker 状态');
     expect(api.listKmsDestructionJobs).toHaveBeenCalledTimes(2);
     expect(api.loadKmsWorkerHealth).toHaveBeenCalledTimes(2);
@@ -79,13 +79,12 @@ describe('销毁任务页面', () => {
     expect(wrapper.text()).toContain('正在读取 Worker 状态');
     expect(wrapper.text()).toContain('连续失败：未取得');
     expect(wrapper.text()).not.toContain('连续失败：0');
-    expect(wrapper.text()).toContain('正在加载销毁任务');
-    expect(wrapper.get('.kms-table-wrap').attributes('aria-busy')).toBe('true');
+    expect(wrapper.get('tbody td.data-table-placeholder').text()).toContain('加载中');
     readingJobs.resolve(page(jobs));
     await flushPromises();
     expect(wrapper.findAll('tbody tr')).toHaveLength(3);
-    expect(wrapper.get('.kms-surface-header').text()).toContain('3 项');
-    expect(wrapper.get('.kms-table-wrap').attributes('aria-busy')).toBe('false');
+    expect(wrapper.get('.kms-panel-heading').text()).toContain('任务列表 3');
+    expect(wrapper.find('tbody td.data-table-placeholder').exists()).toBe(false);
     expect(wrapper.text()).toContain('正在读取 Worker 状态');
     readingWorker.resolve(health);
     await flushPromises();
@@ -95,33 +94,53 @@ describe('销毁任务页面', () => {
     expect(wrapper.findAll('.status-badge:not(.kms-owner-source)').map(node => node.classes())).toEqual([
       ['status-badge', 'success'], ['status-badge', 'warning'], ['status-badge', 'neutral']
     ]);
+    expect(wrapper.findAll('.status-badge:not(.kms-owner-source)').map(node => node.text())).toEqual(['已完成', '处理中', '待处理']);
     expect(wrapper.findAll('.kms-owner-source').map(node => node.text())).toEqual(['平台人员', '服务凭证']);
+    expect(wrapper.findAll('thead th').map(node => node.text())).toEqual([
+      '归属主体', '密钥', '版本', '状态', '计划时间', '租约到期', '完成时间', '尝试次数'
+    ]);
     expect(wrapper.findAll('tbody tr')[0].findAll('td')[5].text()).toBe('-');
+    expect(wrapper.findAll('tbody tr')[0].findAll('td')[6].text()).toBe(new Date(jobs[0].completedAt!).toLocaleString());
     expect(wrapper.findAll('tbody tr')[0].findAll('td')[0].text()).toContain('目录-展示用户');
     expect(wrapper.findAll('tbody tr')[1].findAll('td')[0].text()).toContain('aksk:AKPPTEST0000000001');
     expect(wrapper.findAll('tbody tr')[1].findAll('td')[0].text()).toContain('服务凭证');
     expect(wrapper.findAll('tbody tr')[2].findAll('td')[0].text()).toBe('—');
+    expect(Array.from(wrapper.get('.kms-list-panel').element.children).map(element => element.className)).toEqual([
+      'kms-panel-heading', 'kms-filters', 'data-table-scroll', 'kms-pagination-row'
+    ]);
   });
 
-  it('归属筛选透传并回第一页', async () => {
+  it('归属筛选透传并回第一页，重置清空筛选并恢复默认页', async () => {
+    api.listKmsDestructionJobs.mockResolvedValue(page(jobs, 60));
     wrapper = mount(DestructionView);
     await flushPromises();
+    selectPage(2);
+    await flushPromises();
+    expect(api.listKmsDestructionJobs).toHaveBeenLastCalledWith(2, 20, undefined);
     await wrapper.get('input[aria-label="按归属筛选"]').setValue('iam:1000000000000001');
-    await wrapper.get('input[aria-label="按归属筛选"]').trigger('keyup', { key: 'Enter' });
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
     expect(api.listKmsDestructionJobs).toHaveBeenLastCalledWith(1, 20, 'iam:1000000000000001');
     api.listKmsDestructionJobs.mockResolvedValueOnce({ items: [], total: 0, page: 1, size: 20 });
     await wrapper.get('input[aria-label="按归属筛选"]').setValue('iam:0000000000000009');
-    await wrapper.get('input[aria-label="按归属筛选"]').trigger('keyup', { key: 'Enter' });
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
     expect(wrapper.text()).toContain('当前筛选条件下没有销毁任务');
+    const resetButton = wrapper.findAll('.kms-filter-actions button').find(button => button.text() === '重置');
+    expect(resetButton).toBeDefined();
+    await resetButton!.trigger('click');
+    await flushPromises();
+    expect(wrapper.get('input[aria-label="按归属筛选"]').element).toHaveProperty('value', '');
+    expect(api.listKmsDestructionJobs).toHaveBeenLastCalledWith(1, 20, undefined);
+    expect(wrapper.getComponent(Pagination).props('current')).toBe(1);
   });
 
   it('空列表展示零总数与空态，成功态没有刷新或重试按钮', async () => {
     wrapper = mount(DestructionView);
     await flushPromises();
     expect(wrapper.text()).toContain('当前没有销毁任务');
-    expect(wrapper.get('.kms-surface-header').text()).toContain('0 项');
+    expect(wrapper.get('.kms-panel-heading').text()).toBe('任务列表 0');
+    expect(wrapper.findComponent(Pagination).exists()).toBe(false);
     expect(wrapper.find('button[aria-label="重试 Worker 状态"]').exists()).toBe(false);
     expect(wrapper.find('button[aria-label="重试销毁任务"]').exists()).toBe(false);
     expect(wrapper.text()).not.toContain('刷新');
@@ -160,7 +179,7 @@ describe('销毁任务页面', () => {
     wrapper = mount(DestructionView);
     await flushPromises();
     expect(wrapper.get('[role="alert"]').text()).toContain(error instanceof Error ? error.message : '查询销毁任务失败');
-    expect(wrapper.text()).toContain('未取得任务总数');
+    expect(wrapper.get('.kms-panel-heading').text()).toBe('任务列表');
     expect(wrapper.text()).not.toContain('当前没有销毁任务');
     expect(wrapper.text()).toContain('Worker 正常运行');
     await wrapper.get('button[aria-label="重试销毁任务"]').trigger('click');
@@ -187,11 +206,16 @@ describe('销毁任务页面', () => {
     expect(wrapper.find('[role="alert"]').exists()).toBe(false);
   });
 
-  it('分页使用所选页码，总数与每页20/50/100选项一致，更换大小返回第一页', async () => {
+  it('分页使用所选页码，默认每页20条且复用契约10/20/50/100选项，更换大小返回第一页', async () => {
     api.listKmsDestructionJobs.mockResolvedValue(page(jobs, 180));
     wrapper = mount(DestructionView);
     await flushPromises();
-    expect(wrapper.getComponent(Pagination).props()).toMatchObject({ current: 1, total: 180, pageSize: 20, pageSizeOptions: [20, 50, 100] });
+    expect(wrapper.getComponent(Pagination).props()).toMatchObject({ current: 1, total: 180, pageSize: 20 });
+    await wrapper.get('button[aria-label="每页条数"]').trigger('click');
+    expect(wrapper.findAll('[role="option"]').map(node => node.text())).toEqual([
+      '10 条/页', '20 条/页', '50 条/页', '100 条/页'
+    ]);
+    await wrapper.findAll('[role="option"]').find(node => node.text() === '20 条/页')!.trigger('click');
     selectPage(3);
     await flushPromises();
     expect(api.listKmsDestructionJobs).toHaveBeenLastCalledWith(3, 20, undefined);
@@ -202,7 +226,7 @@ describe('销毁任务页面', () => {
     selectPageSize(100);
     await flushPromises();
     expect(api.listKmsDestructionJobs).toHaveBeenLastCalledWith(1, 100, undefined);
-    expect(wrapper.get('.kms-surface-header').text()).toContain('180 项');
+    expect(wrapper.get('.kms-panel-heading').text()).toContain('任务列表 180');
     expect(api.loadKmsWorkerHealth).toHaveBeenCalledTimes(1);
   });
 
@@ -211,12 +235,18 @@ describe('销毁任务页面', () => {
       .mockResolvedValueOnce(page([], total)).mockResolvedValueOnce(page(total ? jobs : [], total));
     wrapper = mount(DestructionView);
     await flushPromises();
-    selectPage(4);
+    const pagination = wrapper.getComponent(Pagination);
+    pagination.vm.$emit('update:current', 4);
     await flushPromises();
     expect(api.listKmsDestructionJobs.mock.calls.slice(-2)).toEqual([[4, 20, undefined], [lastPage, 20, undefined]]);
-    expect(wrapper.getComponent(Pagination).props('current')).toBe(lastPage);
-    expect(wrapper.get('.kms-table-wrap').attributes('aria-busy')).toBe('false');
-    expect(wrapper.get('.kms-surface-header').text()).toContain(`${total} 项`);
+    if (total) {
+      expect(wrapper.getComponent(Pagination).props('current')).toBe(lastPage);
+      expect(wrapper.find('tbody td.data-table-placeholder').exists()).toBe(false);
+    } else {
+      expect(wrapper.findComponent(Pagination).exists()).toBe(false);
+      expect(wrapper.get('.data-table-placeholder[role="status"]').text()).toContain('当前没有销毁任务');
+    }
+    expect(wrapper.get('.kms-panel-heading').text()).toContain(`任务列表 ${total}`);
   });
 
   it.each(['resolve', 'reject'])('连续翻页时忽略旧页的%s响应和加载状态', async (completion) => {
@@ -239,7 +269,7 @@ describe('销毁任务页面', () => {
     expect(wrapper.get('tbody').text()).not.toContain('old-page-key');
     expect(wrapper.find('[role="alert"]').exists()).toBe(false);
     expect(wrapper.getComponent(Pagination).props()).toMatchObject({ current: 3, total: 100 });
-    expect(wrapper.get('.kms-table-wrap').attributes('aria-busy')).toBe('false');
+    expect(wrapper.find('tbody td.data-table-placeholder').exists()).toBe(false);
   });
 
   it('快速连续重试Worker时旧响应不会覆盖新读取结果', async () => {

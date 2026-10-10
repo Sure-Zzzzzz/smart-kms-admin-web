@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { readableTime } from '../support/principal';
+import DataTable, { type DataTableColumn } from '@sure-zzzzzz/simple-iam-theme-contract/DataTable';
 import FormSelect from '@sure-zzzzzz/simple-iam-theme-contract/FormSelect';
-import PageHeader from '@sure-zzzzzz/simple-iam-theme-contract/PageHeader';
 import Pagination from '@sure-zzzzzz/simple-iam-theme-contract/Pagination';
-import { RefreshCw, Search } from 'lucide-vue-next';
+import { Plus, RefreshCw, Search, Settings2 } from 'lucide-vue-next';
 import { createKmsKey, listMyKmsKeys, loadMyDestructionPolicy, saveMyDestructionPolicy, type KmsKey } from '../api/kmsApi';
 import { hasKmsApiPermission, kmsState } from '../kmsState';
+import { keyAlgorithmLabel, keyPurposeLabel, keyStateLabel } from '../support/kmsDisplay';
 import KeyDetails from '../components/KeyDetails.vue';
 
 const keys = ref<KmsKey[]>([]);
 const totalElements = ref(0);
 const currentPage = ref(1);
-const pageSize = ref(100);
+const pageSize = ref(20);
 const totalPages = computed(() => Math.max(1, Math.ceil(totalElements.value / pageSize.value)));
 const selectedKeyRef = ref('');
 const selectedKey = ref<KmsKey>();
@@ -27,6 +28,25 @@ let identitySequence = 0;
 const canReadKeys = computed(() => hasKmsApiPermission('kms.key.read'));
 const canManageKeys = computed(() => hasKmsApiPermission('kms.key.manage'));
 const canManageDestruction = computed(() => hasKmsApiPermission('kms.key.destroy'));
+
+const keyColumns: DataTableColumn[] = [
+  { key: 'keyAlias', label: '别名' },
+  { key: 'purpose', label: '用途', width: '80px', nowrap: true },
+  { key: 'algorithm', label: '算法', width: '148px', nowrap: true },
+  { key: 'state', label: '状态', width: '100px', nowrap: true },
+  { key: 'activeVersion', label: '活动版本', width: '100px', nowrap: true },
+  { key: 'createdAt', label: '创建时间', width: '176px', nowrap: true },
+  { key: 'actions', label: '操作', width: '112px', align: 'right', nowrap: true }
+];
+const emptyText = computed(() =>
+  !canReadKeys.value
+    ? '当前身份没有读取密钥的权限'
+    : filter.alias || filter.state
+      ? '当前筛选条件下没有匹配的密钥'
+      : canManageKeys.value
+        ? '暂无密钥，点击右上角「新建密钥」创建第一把'
+        : '暂无密钥'
+);
 
 const createOpen = ref(false);
 const createDialog = ref<HTMLElement | null>(null);
@@ -135,6 +155,10 @@ async function loadKeys() {
 function selectKey(key: KmsKey) { if (canReadKeys.value) { selectedKey.value = key; selectedKeyRef.value = key.keyRef; } }
 function closeDetails() { selectedKeyRef.value = ''; selectedKey.value = undefined; }
 function searchKeys() { currentPage.value = 1; void loadKeys(); }
+function resetFilters() {
+  Object.assign(filter, { alias: '', state: '' });
+  searchKeys();
+}
 function selectPage(page: number) { currentPage.value = page; void loadKeys(); }
 function selectPageSize(size: number) { pageSize.value = size; searchKeys(); }
 
@@ -326,39 +350,50 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="kms-page">
-    <PageHeader
-      title="我的密钥"
-      description="个人工作区"
-    >
-      <template #actions>
-        <button
-          v-if="canManageKeys"
-          class="button-primary"
-          type="button"
-          @click="openCreate"
-        >
-          新建密钥
-        </button>
+    <header class="page-header kms-list-page-header">
+      <div class="kms-title-line">
+        <h1>我的密钥</h1>
+      </div>
+      <div class="page-header-actions">
         <button
           v-if="canManageDestruction"
           class="button-secondary"
           type="button"
           @click="openPolicy"
         >
+          <Settings2
+            :size="16"
+            aria-hidden="true"
+          />
           销毁政策
         </button>
-      </template>
-    </PageHeader>
+        <button
+          v-if="canManageKeys"
+          class="button-primary"
+          type="button"
+          @click="openCreate"
+        >
+          <Plus
+            :size="17"
+            aria-hidden="true"
+          />
+          新建密钥
+        </button>
+      </div>
+    </header>
+    <p class="kms-page-subtitle">
+      管理归属于当前账号的密钥、版本、策略与销毁安排。
+    </p>
     <p
       v-if="message"
-      class="kms-message success"
+      class="admin-message success"
       role="status"
     >
       {{ message }}
     </p>
     <p
       v-if="errorMessage"
-      class="kms-message danger"
+      class="admin-message error"
       role="alert"
     >
       <span>{{ errorMessage }}</span>
@@ -395,7 +430,7 @@ onBeforeUnmount(() => {
           <h2>新建密钥</h2>
           <p
             v-if="createErrorMessage"
-            class="kms-message danger"
+            class="admin-message error"
             role="alert"
           >
             {{ createErrorMessage }}
@@ -448,92 +483,110 @@ onBeforeUnmount(() => {
         </form>
       </section>
     </div>
-    <div class="kms-toolbar">
-      <input
-        v-model="filter.alias"
-        aria-label="按别名筛选"
-        placeholder="密钥别名"
-        @keyup.enter="searchKeys"
-      >
-      <FormSelect
-        v-model="filter.state"
-        aria-label="按状态筛选"
-        :options="stateOptions"
-      />
-      <button
-        type="button"
-        class="button-secondary"
-        :disabled="loading || !canReadKeys"
-        @click="searchKeys"
-      >
-        <Search
-          :size="16"
-          aria-hidden="true"
-        />
-        查询
-      </button>
-    </div>
-    <section class="admin-data-surface">
-      <div class="kms-surface-header">
-        <div><h2>归属于我的密钥</h2><span>仅显示当前主体可见的归属</span></div><span>{{ totalElements }} 项</span>
+    <section class="panel kms-list-panel">
+      <div class="kms-panel-heading">
+        <h2>密钥列表 <span v-if="!loading && !errorMessage">{{ totalElements }}</span></h2>
       </div>
+      <form
+        class="kms-filters"
+        @submit.prevent="searchKeys"
+      >
+        <label>别名
+          <input
+            v-model="filter.alias"
+            type="search"
+            aria-label="按别名筛选"
+            placeholder="全部别名"
+          >
+        </label>
+        <div class="kms-filter-field">
+          <span>状态</span>
+          <FormSelect
+            v-model="filter.state"
+            aria-label="按状态筛选"
+            :options="stateOptions"
+          />
+        </div>
+        <div class="kms-filter-actions">
+          <button
+            type="submit"
+            class="button-primary"
+            :disabled="loading || !canReadKeys"
+          >
+            <Search
+              :size="16"
+              aria-hidden="true"
+            />查询
+          </button>
+          <button
+            type="button"
+            class="button-secondary"
+            :disabled="loading"
+            @click="resetFilters"
+          >
+            重置
+          </button>
+        </div>
+      </form>
+      <DataTable
+        v-if="keys.length > 0 || loading"
+        :columns="keyColumns"
+        :rows="keys"
+        row-key="keyRef"
+        :loading="loading"
+        :empty-text="emptyText"
+        scroll-min-width="900px"
+      >
+        <template #cell-state="{ row }">
+          <span
+            class="status-badge"
+            :class="row.state === 'ACTIVE' ? 'success' : row.state === 'PENDING_DESTRUCTION' ? 'warning' : 'neutral'"
+          >{{ keyStateLabel(row.state) }}</span>
+        </template>
+        <template #cell-purpose="{ row }">
+          {{ keyPurposeLabel(row.purpose) }}
+        </template>
+        <template #cell-algorithm="{ row }">
+          {{ keyAlgorithmLabel(row.algorithm) }}
+        </template>
+        <template #cell-activeVersion="{ row }">
+          {{ row.activeVersion ?? '-' }}
+        </template>
+        <template #cell-createdAt="{ row }">
+          {{ readableTime(row.createdAt) }}
+        </template>
+        <template #cell-actions="{ row }">
+          <button
+            type="button"
+            class="table-action kms-view-detail"
+            title="查看详情"
+            :aria-label="`打开${row.keyAlias}详情`"
+            @click="selectKey(row)"
+          >
+            查看详情
+          </button>
+        </template>
+      </DataTable>
+      <p
+        v-else-if="!errorMessage"
+        class="data-table-placeholder"
+        role="status"
+      >
+        {{ loading ? '正在加载密钥…' : emptyText }}
+      </p>
       <div
-        class="kms-table-wrap"
-        :aria-busy="loading"
+        v-if="totalElements > 0"
+        class="kms-pagination-row"
+        :inert="loading"
       >
-        <table class="responsive-table">
-          <thead><tr><th>别名</th><th>用途</th><th>算法</th><th>状态</th><th>活动版本</th><th>创建时间</th><th>操作</th></tr></thead>
-          <tbody>
-            <tr
-              v-for="key in keys"
-              :key="key.keyRef"
-            >
-              <td>{{ key.keyAlias }}</td><td>{{ key.purpose }}</td><td>{{ key.algorithm }}</td><td>
-                <span
-                  class="status-badge"
-                  :class="key.state === 'ACTIVE' ? 'success' : key.state === 'PENDING_DESTRUCTION' ? 'warning' : 'neutral'"
-                >{{ key.state }}</span>
-              </td><td>{{ key.activeVersion ?? '-' }}</td>
-              <td>{{ readableTime(key.createdAt) }}</td>
-              <td>
-                <button
-                  type="button"
-                  class="table-action kms-view-detail"
-                  title="查看详情"
-                  :aria-label="`查看${key.keyAlias}详情`"
-                  @click="selectKey(key)"
-                >
-                  查看详情
-                </button>
-              </td>
-            </tr>
-            <tr v-if="loading">
-              <td
-                colspan="7"
-                class="kms-empty"
-              >
-                正在加载密钥...
-              </td>
-            </tr>
-            <tr v-else-if="keys.length === 0">
-              <td
-                colspan="7"
-                class="kms-empty"
-              >
-                {{ !canReadKeys ? '当前身份没有读取密钥的权限' : filter.alias || filter.state ? '当前筛选条件下没有匹配的密钥' : canManageKeys ? '暂无密钥，点击右上角「新建密钥」创建第一把' : '暂无密钥' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <Pagination
+          :current="currentPage"
+          :total="totalElements"
+          :page-size="pageSize"
+          @update:current="selectPage"
+          @update:page-size="selectPageSize"
+        />
       </div>
-      <Pagination
-        :current="currentPage"
-        :total="totalElements"
-        :page-size="pageSize"
-        :page-size-options="[20, 50, 100]"
-        @update:current="selectPage"
-        @update:page-size="selectPageSize"
-      />
     </section>
     <KeyDetails
       v-if="selectedKeyRef"
@@ -569,7 +622,7 @@ onBeforeUnmount(() => {
           </p>
           <p
             v-if="policyErrorMessage"
-            class="kms-message danger"
+            class="admin-message error"
             role="alert"
           >
             {{ policyErrorMessage }}

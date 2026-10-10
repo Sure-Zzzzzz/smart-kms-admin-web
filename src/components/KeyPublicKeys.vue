@@ -131,7 +131,7 @@ onBeforeUnmount(() => { ++loadSequence; ++copySequence; });
     </p>
     <div
       v-else-if="errorMessage"
-      class="kms-message danger kms-public-key-error"
+      class="admin-message error kms-public-key-error"
       role="alert"
     >
       <span>{{ errorMessage }}</span>
@@ -199,7 +199,7 @@ onBeforeUnmount(() => { ++loadSequence; ++copySequence; });
       </div>
       <p
         v-if="copyErrorMessage"
-        class="kms-message danger"
+        class="admin-message error"
         role="alert"
       >
         {{ copyErrorMessage }}

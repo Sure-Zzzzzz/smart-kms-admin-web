@@ -57,7 +57,7 @@ async function settleNavigate(target: string) {
 </script>
 
 <template>
-  <section class="kms-guide">
+  <section class="panel">
     <h2 v-if="!errorMessage">
       {{ statusMessage }}
     </h2>

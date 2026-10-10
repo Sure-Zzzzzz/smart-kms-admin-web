@@ -8,7 +8,7 @@ it('announces denied access without exposing privileged actions', () => {
   app.mount(root);
   expect(root.querySelector('[role="alert"] .page-header h1')?.textContent).toBe('无权访问');
   expect(root.querySelector('[role="alert"] p')?.textContent).toBe('当前身份没有访问此页面的权限。');
-  expect(root.querySelector('[role="alert"] .kms-empty-state h2')?.textContent).toBe('权限不足');
+  expect(root.querySelector('[role="alert"] .admin-empty-state h2')?.textContent).toBe('权限不足');
   expect(root.querySelectorAll('button, a, input')).toHaveLength(0);
   app.unmount();
 });

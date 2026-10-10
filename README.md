@@ -1,13 +1,13 @@
 # smart-kms-admin-web
 
-`1.0.0` 提供 KMS 管理端 qiankun 子应用，由 IAM 的统一应用门户（Portal）挂载，配套 KMS Server `2.0.2`。它通过 PKCE（以一次性校验值保护浏览器授权码流程）取得 IAM 人员令牌（访问凭证），调用 KMS API，并以 KMS `/me` 响应的页面权限控制路由和菜单。
+`1.0.1` 提供 KMS 管理端 qiankun 子应用，由 IAM 的统一应用门户（Portal）挂载，配套 KMS Server `2.0.2`。它通过 PKCE（以一次性校验值保护浏览器授权码流程）取得 IAM 人员令牌（访问凭证），调用 KMS API，并以 KMS `/me` 响应的页面权限控制路由和菜单。
 
 ## 页面
 
 | 页面 | 路由 | 所需页面权限 | 主要能力 |
 | --- | --- | --- | --- |
 | 我的密钥 | `/app/kms/my-keys` | `kms.page.my-keys` | 本人列表、创建、详情抽屉、生命周期与销毁窗口政策 |
-| 密钥 | `/app/kms/keys` | `kms.page.keys` | 授权数据范围内的列表（含归属主体、创建时间与按归属筛选）、详情与治理操作，创建经右上角弹窗 |
+| 密钥管理 | `/app/kms/keys` | `kms.page.keys` | 授权数据范围内的列表（含归属主体、创建时间与按归属筛选）、详情与治理操作，创建经右上角弹窗；列表行可点击或回车选中（键盘可达），选中行打开详情 |
 | 策略 | `/app/kms/policies` | `kms.page.policies` | 全量策略列表（密钥、双方主体、版本、操作、到期），按别名/被授权主体/操作筛选，行内撤销；创建经弹窗内查找并选定密钥 |
 | 销毁任务 | `/app/kms/destruction` | `kms.page.destruction` | 任务与后台执行状态列表（含归属主体与按归属筛选）；安排与取消在密钥详情中进行 |
 
@@ -36,7 +36,7 @@ ES256 详情通过 `GET /api/kms/me/keys/{keyRef}/public-keys` 展示服务端�
 
 ## 接入基线
 
-当前应用版本为 `1.0.0`。下表声明首发接入所依据的版本，不代表真实后端联调结果。
+当前应用版本为 `1.0.1`。下表声明本版接入所依据的版本，不代表真实后端联调结果。
 
 | 组件 | 接入版本与范围 |
 | --- | --- |
@@ -44,8 +44,8 @@ ES256 详情通过 `GET /api/kms/me/keys/{keyRef}/public-keys` 展示服务端�
 | KMS API Contract | `2.0.2`，由 normal-sdks 的 `sdk/kms/server/contract/` 维护的接口文档版本，不是 npm 包 |
 | IAM Server / Contract | `1.3.0`，兼容 `1.3.x` 向后兼容 patch |
 | Unified Application Portal Web | `1.2.0` |
-| IAM Theme Contract | `@sure-zzzzzz/simple-iam-theme-contract`，精确锁定 `1.0.3` |
-| Frontend Contract | `1.0.0` Git 基线，[`f63d03e`](https://github.com/Sure-Zzzzzz/simple-frontend-contract/commit/f63d03e79f575063df5fa8a436fca3945b686c49)，同级仓库 `link:` 构建 |
+| IAM Theme Contract | `@sure-zzzzzz/simple-iam-theme-contract`，精确锁定 `1.0.5`；表格（DataTable）、对话框（Dialog）、页头、下拉、分页与空态/徽章/行内动作等通用样式族均由契约提供 |
+| Frontend Contract | `1.0.1` Git 基线，[`c30429a`](https://github.com/Sure-Zzzzzz/simple-frontend-contract/commit/c30429a)，同级仓库 `link:` 构建 |
 
 KMS 数据接口的权威定义见 [KMS API Contract](https://github.com/Sure-Zzzzzz/normal-sdks/tree/main/sdk/kms/server/contract)。门户管理登录态与主题；子应用消费主题快照，使用独立 PKCE 人员令牌访问 KMS，通过 `Authorization: Bearer`（在请求头携带令牌的认证方式）发送本应用令牌，不接收门户令牌或携带门户 Cookie。页面入口由 `/api/kms/me` 响应的 `pagePermissions` 决定；写操作须具备对应 API 权限，本人模式固定认证主体归属，治理模式另须覆盖目标归属人的 DATA 授权。
 
@@ -55,7 +55,7 @@ KMS 数据接口的权威定义见 [KMS API Contract](https://github.com/Sure-Zz
 
 复制 `.env.example` 为 gitignored 的 `.env` 并填写 IAM 为 `kms` 可信应用创建的 PKCE 公共客户端 ID。正式联调使用独立 Nginx 单元和统一应用门户的 HTTPS `/app/` 入口，不使用 Vite 开发服务器作为 qiankun entry。
 
-前置条件：Node.js 22.x（至少 `22.13.0`）或 24.x、pnpm `9.15.4`。通用前端契约通过 `link:`（引用本地源码包）构建，须先准备同级 `simple-frontend-contract` 仓库，使用源码提交 `f63d03e79f575063df5fa8a436fca3945b686c49`。其包入口位于 `dist/`，先构建契约，再安装和检查 KMS Web；以下命令在 KMS Web 根目录执行。`--frozen-lockfile` 使用已提交的依赖锁文件，依赖声明与锁文件不一致时终止安装。
+前置条件：Node.js 22.x（至少 `22.13.0`）或 24.x、pnpm `9.15.4`。通用前端契约通过 `link:`（引用本地源码包）构建，须先准备同级 `simple-frontend-contract` 仓库的 `1.0.1` 源码基线。其包入口位于 `dist/`，先构建契约，再安装和检查 KMS Web；以下命令在 KMS Web 根目录执行。`--frozen-lockfile` 使用已提交的依赖锁文件，依赖声明与锁文件不一致时终止安装。
 
 ```bash
 npx pnpm@9.15.4 --dir ../simple-frontend-contract install --frozen-lockfile
@@ -85,6 +85,6 @@ npx pnpm@9.15.4 run check
 
 ## 静态制品与部署
 
-本应用为 `private` 的业务前端，部署制品是 `pnpm build` 生成的 `dist/` 静态目录，不通过 npm 发布。`package.json.version` 管理应用版本；首发使用 `v1.0.0` Git 标签记录已验收提交，后续版本同时维护对应变更说明与兼容范围。
+本应用为 `private` 的业务前端，部署制品是 `pnpm build` 生成的 `dist/` 静态目录，不通过 npm 发布。`package.json.version` 管理应用版本；本版使用 `v1.0.1` Git 标签记录已验收提交，并保留 `v1.0.0` 制品作为回滚基线；后续版本同时维护对应变更说明与兼容范围。
 
 生产构建基路径为 `/app/kms/`。将 `dist/` 托管于独立 Nginx 单元，统一入口转发 `/app/kms/` 静态资源与 `/api/kms/` KMS API；IAM `/oauth2/` 与登录入口由统一入口管理。Portal 的可信应用 entry 指向 `<统一入口>/app/kms/index.html`，routePrefix 使用 `/app/kms`，PKCE 回调使用 `<统一入口>/app/kms/oauth-callback`。`deploy/nginx.conf` 是部署模板，后端上游须由部署环境配置。

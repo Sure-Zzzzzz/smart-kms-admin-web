@@ -3,42 +3,68 @@
 body { margin: 0; }
 button, input, textarea { font: inherit; }
 button { cursor: pointer; }
-.kms-admin-app { min-height: 100%; min-width: 0; font-family: var(--iam-font-family); font-size: 14px; background: var(--iam-color-canvas); color: var(--iam-color-text-primary); }
+.kms-admin-app { min-height: 100%; min-width: 0; font-family: var(--iam-font-family); font-size: 16px; line-height: 1.5; background: var(--iam-color-canvas); color: var(--iam-color-text-primary); }
 .kms-layout { min-height: 100vh; }
 .kms-module-nav { display: flex; min-height: 48px; padding: 0 24px; gap: 4px; align-items: center; border-bottom: 1px solid var(--iam-color-border); background: var(--iam-color-surface); }
 .kms-module-nav a { display: inline-flex; gap: 8px; align-items: center; padding: 8px 12px; color: var(--iam-color-text-secondary); text-decoration: none; border-radius: var(--iam-radius-control); }
 .kms-module-nav a.router-link-active { background: var(--iam-color-primary-weak); color: var(--iam-color-primary); }
 .kms-content, .kms-page { width: 100%; min-width: 0; }
 /* Portal 已提供内容区留白；独立调试模式才由子应用承担页面外边距。 */
-.kms-page { padding: 0; }
+.kms-page { display: flex; flex-direction: column; padding: 0; }
 .kms-admin-app--standalone .kms-page { padding: 24px; }
-.kms-page-header, .kms-surface-header, .kms-toolbar, .kms-actions, .kms-destruction-action, .kms-health-band { display: flex; align-items: center; gap: 12px; }
+.kms-page-header, .kms-surface-header, .kms-toolbar, .kms-actions, .kms-destruction-action { display: flex; align-items: center; gap: 12px; }
 .kms-page-header { justify-content: space-between; margin-bottom: 20px; }
 .kms-page-header span, .kms-surface-header span { color: var(--iam-color-text-secondary); font-size: 13px; }
 h1, h2, p { margin: 0; } h1 { font-size: 20px; } h2 { font-size: 16px; }
-.admin-data-surface, .kms-detail-panel { border: 1px solid var(--iam-color-border); background: var(--iam-color-surface); border-radius: var(--iam-radius-card); box-shadow: var(--iam-shadow-card); }
-.admin-data-surface { padding: 20px; min-width: 0; }
-.kms-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; }
-.kms-workspace:not(:has(.kms-detail-panel)) { grid-template-columns: minmax(0, 1fr); }
-.kms-detail-panel { padding: 20px; min-width: 0; }
 .kms-surface-header { justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; }
 .kms-toolbar { margin-bottom: 16px; flex-wrap: wrap; }
-input, textarea { min-height: 40px; min-width: 0; max-width: 100%; padding: 8px 12px; border: 1px solid var(--iam-color-border); border-radius: var(--iam-radius-control); background: var(--iam-color-surface-raised); color: var(--iam-color-text-primary); }
+input, textarea { min-height: 42px; min-width: 0; max-width: 100%; padding: 8px 10px; border: 1px solid var(--iam-color-border); border-radius: var(--iam-radius-control); background: var(--iam-color-surface-raised); color: var(--iam-color-text-primary); }
 button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 /* 对话框/遮罩直接用契约 .dialog-backdrop/.confirm-dialog；按钮语义对齐契约 .button-* 家族 */
 button:disabled { cursor: not-allowed; opacity: .55; }
 .kms-form, .kms-inline-form { display: grid; gap: 16px; }.kms-form :is(label, .kms-field), .kms-inline-form :is(label, .kms-field) { display: grid; gap: 8px; min-width: 0; color: var(--iam-color-text-secondary); font-size: 13px; font-weight: 600; }
 .kms-form { margin-top: 16px; }
 .kms-inline-form { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); align-items: end; margin-top: 16px; }
-.kms-table-wrap { overflow-x: auto; }.responsive-table { width: 100%; border-collapse: collapse; font-size: 13px; }.responsive-table th, .responsive-table td { padding: 12px; border-bottom: 1px solid var(--iam-color-border); text-align: left; white-space: nowrap; }.responsive-table th { color: var(--iam-color-text-secondary); font-size: 12px; font-weight: 600; }.responsive-table tbody tr[tabindex="0"]:hover, .responsive-table tr.selected { background: var(--iam-color-surface-soft); cursor: pointer; }
-.status-badge { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }.status-badge.success { background: var(--iam-color-success-bg); color: var(--iam-color-success); }.status-badge.warning { background: var(--iam-color-warning-bg); color: var(--iam-color-warning); }.status-badge.danger { background: var(--iam-color-danger-bg); color: var(--iam-color-danger); }.status-badge.neutral { background: var(--iam-color-surface-soft); color: var(--iam-color-text-secondary); }
-.kms-selected-detail { min-width: 0; }.kms-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0 0 16px; }.kms-facts div { min-width: 0; padding: 10px; background: var(--iam-color-surface-soft); }.kms-facts dt { color: var(--iam-color-text-secondary); font-size: 12px; }.kms-facts dd { margin: 4px 0 0; }.kms-destruction-action { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--iam-color-border); }
-.kms-message { margin-bottom: 14px; padding: 10px 12px; border-radius: var(--iam-radius-control); }.kms-message.success { background: var(--iam-color-success-bg); color: var(--iam-color-success); }.kms-message.danger { background: var(--iam-color-danger-bg); color: var(--iam-color-danger); }
-.kms-health-band { margin-bottom: 16px; padding: 13px 16px; border: 1px solid var(--iam-color-border); background: var(--iam-color-surface-soft); }.kms-health-band div { display: grid; gap: 3px; }.kms-health-band span { color: var(--iam-color-text-secondary); font-size: 13px; }
-.kms-guide { margin: 24px; padding: 32px; border: 1px solid var(--iam-color-border); border-radius: var(--iam-radius-card); background: var(--iam-color-surface); }.kms-guide p { margin-top: 8px; color: var(--iam-color-text-secondary); }.kms-standalone-header { display: grid; gap: 14px; padding: 20px 24px 0; border-bottom: 1px solid var(--iam-color-border); background: var(--iam-color-surface); }.kms-standalone-header span { color: var(--iam-color-text-secondary); }.kms-empty { padding: 30px !important; color: var(--iam-color-text-secondary); text-align: center !important; }.table-action { min-width: 34px; padding: 7px; }
-/* 403/独立引导等终态空页：对齐 IAM/AKSK 管理台空态形态（虚线卡+网格居中），替代全宽巨卡观感 */
-.kms-empty-state { align-content: center; align-items: center; background: var(--iam-color-surface); border: 1px dashed var(--iam-color-border); border-radius: var(--iam-radius-card); display: grid; justify-items: center; min-height: max(320px, calc(100vh - 360px)); padding: 28px; text-align: center; }.kms-empty-state .kms-empty-state-icon { color: var(--iam-color-primary); height: 52px; width: 52px; }.kms-empty-state h2 { font-size: 18px; margin: 20px 0 8px; }.kms-empty-state p { color: var(--iam-color-text-secondary); font-size: 14px; margin: 0; max-width: 400px; }
-@media (max-width: 760px) { .kms-admin-app--standalone .kms-page { padding: 16px; }.kms-module-nav { padding: 0 12px; overflow-x: auto; }.kms-workspace { grid-template-columns: 1fr; }.kms-inline-form, .kms-facts { grid-template-columns: 1fr; }.kms-destruction-action { align-items: stretch; flex-direction: column; } }
+/* 数据表格走契约 DataTable；无数据时在滚动区外复用契约占位样式，避免手机空态在宽表中被裁切。 */
+.kms-selected-detail { min-width: 0; }.kms-destruction-action { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--iam-color-border); }
+/* 提示条配色走契约 .admin-message（success/error）；本仓提示条带下间距与两端布局，覆写布局位 */
+.admin-message { margin-bottom: 14px; }
+.kms-list-page-header { flex-wrap: wrap; margin-bottom: 10px; }
+.kms-title-line { min-width: 0; }
+.kms-list-page-header h1 { letter-spacing: 0; margin: 0; overflow-wrap: anywhere; }
+.kms-list-page-header .page-header-actions { flex-wrap: wrap; }
+.kms-page-subtitle { color: var(--iam-color-text-secondary); font-size: 16px; line-height: 1.5; margin: 0 0 8px; }
+.kms-list-panel { margin: 0; padding: 24px; }
+.kms-panel-heading h2 { font-size: 24px; font-weight: 700; margin: 0 0 16px; }
+.kms-filters { align-items: flex-end; display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.kms-filters > label, .kms-filter-field { color: var(--iam-color-text-secondary); display: flex; flex: 0 0 200px; flex-direction: column; font-size: 12.5px; gap: 4px; min-width: 0; width: 200px; }
+.kms-filters > label.kms-filter-owner { flex-basis: 260px; width: 260px; }
+.kms-filters input, .kms-filter-field .form-select, .kms-filter-field .form-select-toggle { width: 100%; }
+.kms-filter-actions { align-items: center; display: flex; gap: 12px; margin-left: auto; }
+.kms-pagination-row { margin-top: 12px; }
+.kms-pagination-row .pagination { width: 100%; }
+.kms-worker-summary { display: grid; gap: 2px; text-align: right; }
+.kms-worker-summary strong { font-size: 14px; }
+.kms-worker-summary span { color: var(--iam-color-text-secondary); font-size: 12px; }
+/* 信息卡与回调页底形态走契约 .panel */
+.kms-standalone-header { display: grid; gap: 14px; padding: 20px 24px 0; border-bottom: 1px solid var(--iam-color-border); background: var(--iam-color-surface); }.kms-standalone-header span { color: var(--iam-color-text-secondary); }
+/* 403/独立引导等终态空页：底形态走契约 .admin-empty-state；终态页占屏高度与 52px 图标是本仓布局位 */
+.admin-empty-state { min-height: max(320px, calc(100vh - 360px)); }
+.admin-empty-state .kms-empty-state-icon { color: var(--iam-color-primary); height: 52px; width: 52px; }
+.admin-empty-state h2 { margin-top: 20px; }
+@media (max-width: 760px) {
+  .kms-admin-app--standalone .kms-page { padding: 16px; }
+  .kms-module-nav { padding: 0 12px; overflow-x: auto; }
+  .kms-inline-form { grid-template-columns: 1fr; }
+  .kms-destruction-action { align-items: stretch; flex-direction: column; }
+  .kms-filters > label, .kms-filter-field, .kms-filters > label.kms-filter-owner { flex-basis: calc(50% - 8px); width: calc(50% - 8px); }
+  .kms-filter-actions { justify-content: flex-end; margin-left: 0; width: 100%; }
+  .kms-pagination-row { overflow-x: auto; }
+  .kms-worker-summary { text-align: left; }
+}
+@media (max-width: 520px) {
+  .kms-filters > label, .kms-filter-field, .kms-filters > label.kms-filter-owner { flex-basis: 100%; width: 100%; }
+}
 
 .kms-header-actions { display: flex; align-items: center; gap: 12px; }
 .kms-form-dialog { max-height: calc(100dvh - 40px); overflow-y: auto; }
@@ -46,26 +72,26 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .kms-form-dialog .kms-form-dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
 .kms-policy-hint { color: var(--iam-color-text-secondary); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .kms-surface-header > div { display: grid; gap: 4px; min-width: 0; }
-.kms-message { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-message { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .kms-retry-button { margin-left: auto; }
 .kms-admin-app :is(button, a, input, textarea):focus-visible { outline: 2px solid var(--iam-color-focus-ring); outline-offset: 2px; }
-.responsive-table tbody tr[tabindex="0"]:focus-visible { outline: 2px solid var(--iam-color-focus-ring); outline-offset: -2px; }
-.kms-page > .page-header { margin-bottom: 20px; flex-wrap: wrap; }
+.kms-page > .page-header { flex-wrap: wrap; }
+.kms-page > .page-header:not(.kms-list-page-header) { margin-bottom: 20px; }
 .kms-page .page-header > div { min-width: 0; }
 .kms-page .page-header h1 { letter-spacing: 0; overflow-wrap: anywhere; }
 .kms-page .page-header-actions, .kms-actions, .kms-destruction-action { flex-wrap: wrap; }
 .kms-toolbar > input, .kms-toolbar > .form-select { flex: 0 1 220px; min-width: 0; }
-.kms-facts dd, .kms-surface-header code, .kms-message span { overflow-wrap: anywhere; }
+.detail-list dd, .kms-surface-header code, .admin-message span { overflow-wrap: anywhere; }
 
 .kms-key-detail-drawer .drawer-header h2 { letter-spacing: 0; overflow-wrap: anywhere; }
 .kms-key-detail-drawer .drawer-header > div { min-width: 0; }
 .kms-admin-app .confirm-dialog p { overflow-wrap: anywhere; }
 .kms-field-value { display: flex; align-items: flex-start; gap: 8px; }
 .kms-field-value .table-action { flex: none; }
-.table-action { width: 34px; height: 34px; flex: none; padding: 7px; border-radius: var(--iam-radius-control); }
-.table-action.kms-view-detail { width: auto; min-width: 80px; padding: 7px 12px; white-space: nowrap; }
-.table-action:not(.button-danger) { border: 1px solid var(--iam-color-border); background: var(--iam-color-surface); color: var(--iam-color-text-secondary); }
-.table-action:not(.button-danger):hover:not(:disabled) { border-color: var(--iam-color-primary); background: var(--iam-color-surface-soft); color: var(--iam-color-primary); }
+.table-action { flex: none; }
+.table-action.kms-view-detail { min-width: 80px; }
+.table-action.kms-danger-action { background: var(--iam-color-surface); border-color: var(--iam-color-danger); color: var(--iam-color-danger); }
+.table-action.kms-danger-action:hover:not(:disabled) { background: var(--iam-color-danger-bg); border-color: var(--iam-color-danger); color: var(--iam-color-danger); }
 .kms-key-lifecycle { margin: 16px 0; }
 .kms-key-policy { padding-top: 16px; border-top: 1px solid var(--iam-color-border); }
 .kms-key-policy h3, .kms-public-key-section h3 { margin: 0; font-size: 14px; }
@@ -75,7 +101,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .kms-public-key-header { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .kms-public-key-header > .form-select { flex: 1; min-width: 0; }
 .kms-public-key-material { width: 100%; min-width: 0; resize: vertical; overflow-wrap: anywhere; white-space: pre-wrap; font-family: monospace; }
-.kms-selected-detail .kms-message { margin: 12px 0; }
+.kms-selected-detail .admin-message { margin: 12px 0; }
 .kms-public-key-error { flex-direction: column; align-items: stretch; }
 .kms-public-key-error .kms-actions { justify-content: flex-start; }
 .kms-public-key-error a { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }

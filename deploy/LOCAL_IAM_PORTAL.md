@@ -6,7 +6,7 @@
 
 ## 构建与 Nginx
 
-1. 使用 Node.js 22.x（至少 `22.13.0`）或 24.x 和 pnpm `9.15.4`。同级 `simple-frontend-contract` 仓库使用 `1.0.0` 基线提交 `f63d03e79f575063df5fa8a436fca3945b686c49`，先按根 README 冻结安装并构建契约，再冻结安装 KMS Web；主题契约由锁文件精确使用 `1.0.3`。
+1. 使用 Node.js 22.x（至少 `22.13.0`）或 24.x 和 pnpm `9.15.4`，先准备同级 `simple-frontend-contract` 仓库的 `1.0.1` 基线并冻结安装、构建其 `@sure-zzzzzz/simple-frontend-contract` 包，再冻结安装本仓依赖；主题契约由锁文件精确使用 `1.0.5`。
 2. 本地 gitignored `.env` 设置 `VITE_KMS_PKCE_CLIENT_ID` 为 IAM 已登记的 PUBLIC OAuth Client（浏览器公共授权客户端）的 client id（客户端标识）；模板示例为 `kms-portal-web`，不填写 Secret（客户端机密认证凭据）。
 3. 执行 `pnpm build` 生成 `dist/`。前端构建基路径为 `/app/kms/`。
 4. 参考 [Nginx 模板](nginx.conf)，将 `dist/` 挂载到静态目录 `/www/kms-admin/`，承载 `/app/kms/`。统一入口可直接托管该目录，或反代到独立 Nginx 单元。

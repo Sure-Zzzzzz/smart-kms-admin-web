@@ -27,7 +27,7 @@ const akskPolicy: KmsAdminPolicy = {
 };
 const keyPage: KmsPage<KmsKey> = { items: [key], total: 1, page: 1, size: 100 };
 function policyPage(items: KmsAdminPolicy[], total = items.length): KmsPage<KmsAdminPolicy> {
-  return { items, total, page: 1, size: 100 };
+  return { items, total, page: 1, size: 20 };
 }
 let wrapper: VueWrapper;
 async function clickButton(matcher: RegExp) {
@@ -61,11 +61,19 @@ afterEach(() => { wrapper?.unmount(); setKmsMe(null); });
 describe('密钥策略页面', () => {
   it('全量策略列表展示密钥、双方主体显示名、版本与到期；密钥候选仅在打开创建弹窗时加载', async () => {
     await mountView();
-    expect(api.listAdminKmsPolicies).toHaveBeenCalledWith(expect.objectContaining({ page: 1, size: 100 }));
+    expect(api.listAdminKmsPolicies).toHaveBeenCalledWith(expect.objectContaining({ page: 1, size: 20 }));
     expect(api.listAdminKmsKeys).not.toHaveBeenCalled();
+    expect(wrapper.get('.page-header h1').text()).toBe('策略');
+    expect(wrapper.get('.page-header-actions .button-primary').text()).toContain('创建策略');
+    expect(Array.from(wrapper.get('.kms-page').element.children).map(node => node.classList[0])).toEqual([
+      'page-header', 'kms-page-subtitle', 'panel'
+    ]);
+    expect(Array.from(wrapper.get('.kms-list-panel').element.children).map(node => node.classList[0])).toEqual([
+      'kms-panel-heading', 'kms-filters', 'data-table-scroll', 'kms-pagination-row'
+    ]);
     const headers = wrapper.findAll('thead th').map(node => node.text());
-    expect(headers).toEqual(['密钥', '归属主体', '被授权主体', '版本', '操作', '到期时间', '']);
-    expect(wrapper.get('.kms-surface-header').text()).toContain('2 项');
+    expect(headers).toEqual(['密钥', '归属主体', '被授权主体', '版本', '授权操作', '到期时间', '操作']);
+    expect(wrapper.get('.kms-panel-heading').text()).toContain('2');
     const rows = wrapper.findAll('tbody tr');
     expect(rows).toHaveLength(2);
     const first = rows[0].findAll('td').map(td => td.text());
@@ -74,13 +82,15 @@ describe('密钥策略页面', () => {
     expect(first[1]).toContain('目录-展示用户');
     expect(first[2]).toContain('目录-被授权方');
     expect(first[3]).toBe('全部');
-    expect(first[4]).toBe('SIGN');
+    expect(first[4]).toBe('签名');
     expect(first[5]).toBe('长期有效');
+    expect(first[6]).toBe('撤销');
     const second = rows[1].findAll('td').map(td => td.text());
     expect(second[1]).toContain('服务凭证');
     expect(second[1]).toContain('aksk:AKPPTEST0000000001');
     expect(second[2]).toContain('aksk:AKPPTEST0000000002');
     expect(second[3]).toBe('2');
+    expect(second[4]).toBe('解密');
     expect(second[5]).not.toBe('长期有效');
   });
 
@@ -90,22 +100,49 @@ describe('密钥策略页面', () => {
     await wrapper.get('input[aria-label="按密钥别名筛选"]').setValue('签名');
     await wrapper.get('input[aria-label="按被授权主体筛选"]').setValue('iam:2000000000000002');
     await choose('按操作筛选', '签名');
-    await clickButton(/查询/);
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
     expect(api.listAdminKmsPolicies).toHaveBeenCalledWith(expect.objectContaining({
       keyAlias: '签名', principalId: 'iam:2000000000000002', operation: 'SIGN', page: 1
     }));
   });
 
-  it('策略分页翻页携带页码，筛选回第一页', async () => {
-    api.listAdminKmsPolicies.mockResolvedValue(policyPage([iamPolicy], 250));
+  it('重置清空全部筛选条件并回到第一页', async () => {
+    api.listAdminKmsPolicies.mockResolvedValue(policyPage([iamPolicy], 60));
     await mountView();
     wrapper.findComponent(Pagination).vm.$emit('update:current', 2);
     await flushPromises();
-    expect(api.listAdminKmsPolicies).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }));
-    wrapper.findComponent(Pagination).vm.$emit('update:pageSize', 20);
+    await wrapper.get('input[aria-label="按密钥别名筛选"]').setValue('签名');
+    await wrapper.get('input[aria-label="按被授权主体筛选"]').setValue('iam:2000000000000002');
+    await choose('按操作筛选', '签名');
+    await clickButton(/^重置$/);
     await flushPromises();
-    expect(api.listAdminKmsPolicies).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, size: 20 }));
+    expect(wrapper.get('input[aria-label="按密钥别名筛选"]').element).toHaveProperty('value', '');
+    expect(wrapper.get('input[aria-label="按被授权主体筛选"]').element).toHaveProperty('value', '');
+    expect(wrapper.get('button[aria-label="按操作筛选"]').text()).toBe('全部操作');
+    expect(api.listAdminKmsPolicies).toHaveBeenLastCalledWith({
+      page: 1, size: 20, keyAlias: undefined, principalId: undefined, operation: undefined
+    });
+    expect(wrapper.findComponent(Pagination).props('current')).toBe(1);
+  });
+
+  it('策略分页翻页携带页码，筛选回第一页', async () => {
+    api.listAdminKmsPolicies.mockResolvedValue(policyPage([iamPolicy], 250));
+    await mountView();
+    expect(wrapper.findComponent(Pagination).props()).toMatchObject({
+      current: 1, total: 250, pageSize: 20
+    });
+    await wrapper.get('button[aria-label="每页条数"]').trigger('click');
+    expect(wrapper.findAll('[role="option"]').map(node => node.text())).toEqual([
+      '10 条/页', '20 条/页', '50 条/页', '100 条/页'
+    ]);
+    await wrapper.findAll('[role="option"]').find(node => node.text() === '20 条/页')!.trigger('click');
+    wrapper.findComponent(Pagination).vm.$emit('update:current', 2);
+    await flushPromises();
+    expect(api.listAdminKmsPolicies).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, size: 20 }));
+    await choose('每页条数', '50 条/页');
+    await flushPromises();
+    expect(api.listAdminKmsPolicies).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, size: 50 }));
   });
 
   it('创建策略：点按钮弹窗、查找并选择密钥、校验参数、成功后刷新列表并提示', async () => {
@@ -158,8 +195,8 @@ describe('密钥策略页面', () => {
     await mountView();
     setKmsMe({ principalId: 'iam:next', subjectType: 'HUMAN', scopes: ['kms.key.policy'], pagePermissions: ['kms.page.policies'] });
     await flushPromises();
-    expect(wrapper.get('.kms-surface-header').text()).toContain('0 项');
-    expect(wrapper.findAll('tbody tr').length).toBeGreaterThanOrEqual(1);
+    expect(wrapper.get('.kms-panel-heading').text()).toContain('0');
+    expect(wrapper.find('.data-table-placeholder[role="status"]').exists()).toBe(true);
     expect(api.listAdminKmsPolicies).toHaveBeenCalled();
   });
 
@@ -170,7 +207,7 @@ describe('密钥策略页面', () => {
     await wrapper.get('.kms-retry-button').trigger('click');
     await flushPromises();
     expect(api.listAdminKmsPolicies).toHaveBeenCalledTimes(2);
-    expect(wrapper.get('.kms-surface-header').text()).toContain('2 项');
+    expect(wrapper.get('.kms-panel-heading').text()).toContain('2');
   });
 
   it('查找密钥失败只在创建弹窗提示，不影响已有策略列表', async () => {
@@ -182,7 +219,7 @@ describe('密钥策略页面', () => {
     await clickButton(/查找/);
     await flushPromises();
     expect(wrapper.text()).toContain('密钥服务不可用');
-    expect(wrapper.get('.kms-surface-header').text()).toContain('2 项');
+    expect(wrapper.get('.kms-panel-heading').text()).toContain('2');
   });
 
   it('查找无匹配密钥时弹窗内提示换别名，选择器保持占位', async () => {

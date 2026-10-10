@@ -9,9 +9,9 @@ import PageHeader from '@sure-zzzzzz/simple-iam-theme-contract/PageHeader';
       title="KMS 管理"
       description="密钥管理控制台"
     />
-    <div class="kms-empty-state">
+    <div class="admin-empty-state">
       <LogIn
-        class="kms-empty-state-icon"
+        class="admin-empty-state-icon"
         aria-hidden="true"
       />
       <h2>请从门户进入</h2>

@@ -20,7 +20,7 @@ const key: KmsKey = {
   keyRef: 'mine', keyAlias: '我的签名密钥', purpose: 'SIGN', algorithm: 'ES256', state: 'ACTIVE',
   activeVersion: 1, rowVersion: 1, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z'
 };
-const page = (items: KmsKey[]): KmsPage<KmsKey> => ({ items, total: items.length, page: 1, size: 100 });
+const page = (items: KmsKey[]): KmsPage<KmsKey> => ({ items, total: items.length, page: 1, size: 20 });
 const policy: KmsOwnerDestructionPolicy = {
   exists: true, ownerPrincipalId: 'iam:owner', minScheduleAheadSeconds: 3600,
   maxScheduleAheadSeconds: 7200, rowVersion: 2
@@ -77,9 +77,9 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView, { global: { stubs: { KeyDetails: true } } });
     await flushPromises();
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue('旧创建输入');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('旧创建输入');
     await choose('用途', '加解密（ENCRYPT）');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     kmsState.me!.scopes = ['kms.key.read', 'kms.key.destroy'];
     await nextTick();
     expect(wrapper.find('[aria-label="新建密钥"]').exists()).toBe(false);
@@ -88,16 +88,16 @@ describe('我的密钥页面', () => {
     await nextTick();
     expect(wrapper.find('[aria-label="新建密钥"]').exists()).toBe(false);
     await button('新建密钥').trigger('click');
-    expect(wrapper.get('form input[maxlength]').element).toHaveProperty('value', '');
+    expect(wrapper.get('[role="dialog"] form.kms-form input[maxlength]').element).toHaveProperty('value', '');
     expect(wrapper.get('button[aria-label="用途"]').text()).toBe('签名（SIGN）');
-    await wrapper.get('form input[maxlength]').setValue('新创建输入');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('新创建输入');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     if (completion === 'resolve') stale.resolve(key); else stale.reject(new Error('旧manage创建失败'));
     await flushPromises();
     expect(wrapper.findComponent(KeyDetails).exists()).toBe(false);
     expect(wrapper.text()).not.toContain('旧manage创建失败');
-    expect(wrapper.get('form input[maxlength]').element).toHaveProperty('value', '新创建输入');
-    expect(wrapper.get('form button[type="submit"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[role="dialog"] form.kms-form input[maxlength]').element).toHaveProperty('value', '新创建输入');
+    expect(wrapper.get('[role="dialog"] form.kms-form button[type="submit"]').attributes('disabled')).toBeDefined();
     expect(api.listMyKmsKeys).toHaveBeenCalledTimes(1);
     expect(api.createKmsKey.mock.calls[1][1]).not.toBe(api.createKmsKey.mock.calls[0][1]);
     latest.resolve({ ...key, keyRef: 'restored-created' });
@@ -111,8 +111,8 @@ describe('我的密钥页面', () => {
     await flushPromises();
     await button('销毁政策').trigger('click');
     await flushPromises();
-    await wrapper.findAll('form input[type="number"]')[0].setValue('7');
-    await wrapper.findAll('form input[type="number"]')[1].setValue('9');
+    await wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].setValue('7');
+    await wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[1].setValue('9');
     kmsState.me!.scopes = ['kms.key.read', 'kms.key.manage'];
     await nextTick();
     expect(wrapper.find('[aria-label="销毁窗口政策"]').exists()).toBe(false);
@@ -123,13 +123,13 @@ describe('我的密钥页面', () => {
     const fresh = deferred<KmsOwnerDestructionPolicy>();
     api.loadMyDestructionPolicy.mockReturnValueOnce(fresh.promise);
     await button('销毁政策').trigger('click');
-    for (const input of wrapper.findAll('form input[type="number"]')) {
+    for (const input of wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')) {
       expect(input.element).toHaveProperty('value', '');
       expect(input.attributes('disabled')).toBeDefined();
     }
     fresh.resolve(policy);
     await flushPromises();
-    expect(wrapper.findAll('form input[type="number"]')[0].element).toHaveProperty('value', '1');
+    expect(wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].element).toHaveProperty('value', '1');
   });
 
   it.each([
@@ -147,9 +147,9 @@ describe('我的密钥页面', () => {
     await button('销毁政策').trigger('click');
     if (kind === 'save') {
       await flushPromises();
-      await wrapper.findAll('form input[type="number"]')[0].setValue('7');
-      await wrapper.findAll('form input[type="number"]')[1].setValue('8');
-      await wrapper.get('form').trigger('submit');
+      await wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].setValue('7');
+      await wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[1].setValue('8');
+      await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     }
     kmsState.me!.scopes = ['kms.key.read', 'kms.key.manage'];
     await nextTick();
@@ -159,9 +159,9 @@ describe('我的密钥页面', () => {
     await button('销毁政策').trigger('click');
     if (kind === 'save') {
       await flushPromises();
-      await wrapper.findAll('form input[type="number"]')[0].setValue('3');
-      await wrapper.findAll('form input[type="number"]')[1].setValue('4');
-      await wrapper.get('form').trigger('submit');
+      await wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].setValue('3');
+      await wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[1].setValue('4');
+      await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     }
     if (completion === 'resolve') stale.resolve({ ...policy, minScheduleAheadSeconds: 25200 });
     else stale.reject(new Error('旧destroy政策失败'));
@@ -169,13 +169,13 @@ describe('我的密钥页面', () => {
     expect(wrapper.find('[aria-label="销毁窗口政策"]').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('旧destroy政策失败');
     expect(wrapper.getComponent(KeyDetails).props('policyRevision')).toBe(0);
-    expect(wrapper.get('form button[type="submit"]').attributes('disabled')).toBeDefined();
-    expect(wrapper.findAll('form input[type="number"]')[0].element).toHaveProperty('value', kind === 'read' ? '' : '3');
+    expect(wrapper.get('[role="dialog"] form.kms-form button[type="submit"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].element).toHaveProperty('value', kind === 'read' ? '' : '3');
     if (kind === 'read') {
       latestRead.resolve({ ...policy, minScheduleAheadSeconds: 10800, maxScheduleAheadSeconds: 14400 });
       await flushPromises();
-      expect(wrapper.findAll('form input[type="number"]')[0].element).toHaveProperty('value', '3');
-      expect(wrapper.get('form button[type="submit"]').attributes('disabled')).toBeUndefined();
+      expect(wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].element).toHaveProperty('value', '3');
+      expect(wrapper.get('[role="dialog"] form.kms-form button[type="submit"]').attributes('disabled')).toBeUndefined();
       expect(api.saveMyDestructionPolicy).not.toHaveBeenCalled();
     } else {
       latestSave.resolve(policy);
@@ -194,17 +194,17 @@ describe('我的密钥页面', () => {
     if (action === 'create') {
       api.createKmsKey.mockReturnValueOnce(pending.promise);
       await button('新建密钥').trigger('click');
-      await wrapper.get('form input[maxlength]').setValue('合法创建');
+      await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('合法创建');
     } else {
       api.saveMyDestructionPolicy.mockReturnValueOnce(pending.promise);
       await wrapper.get('button.kms-view-detail').trigger('click');
       await button('销毁政策').trigger('click');
       await flushPromises();
     }
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     kmsState.me!.scopes = kmsState.me!.scopes.filter(permission => permission !== (action === 'create' ? 'kms.key.destroy' : 'kms.key.manage'));
     await nextTick();
-    expect(wrapper.get('form button[type="submit"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[role="dialog"] form.kms-form button[type="submit"]').attributes('disabled')).toBeDefined();
     pending.resolve(action === 'create' ? key : policy);
     await flushPromises();
     if (action === 'create') expect(wrapper.getComponent(KeyDetails).props('keyRef')).toBe(key.keyRef);
@@ -219,20 +219,20 @@ describe('我的密钥页面', () => {
     const stale = deferred<KmsPage<KmsKey>>();
     const latest = deferred<KmsPage<KmsKey>>();
     api.listMyKmsKeys.mockReturnValueOnce(stale.promise).mockReturnValueOnce(latest.promise);
-    await button('查询').trigger('click');
+    await wrapper.get('form.kms-filters').trigger('submit');
     kmsState.me!.scopes = ['kms.key.manage'];
     await nextTick();
-    expect(wrapper.get('tbody').text()).not.toContain(key.keyAlias);
+    expect(wrapper.text()).not.toContain(key.keyAlias);
     expect(wrapper.findComponent(KeyDetails).exists()).toBe(false);
     expect(button('查询').attributes('disabled')).toBeDefined();
-    await button('查询').trigger('click');
+    await wrapper.get('form.kms-filters').trigger('submit');
     expect(api.listMyKmsKeys).toHaveBeenCalledTimes(2);
     kmsState.me!.scopes = ['kms.key.read', 'kms.key.manage'];
     if (completion === 'resolve') stale.resolve(page([key])); else stale.reject(new Error('旧read列表错误'));
     await flushPromises();
-    expect(wrapper.get('tbody').text()).not.toContain(key.keyAlias);
+    expect(wrapper.text()).not.toContain(key.keyAlias);
     expect(wrapper.text()).not.toContain('旧read列表错误');
-    expect(wrapper.get('.kms-table-wrap').attributes('aria-busy')).toBe('true');
+    expect(wrapper.get('tbody td.data-table-placeholder').text()).toContain('加载中');
     latest.resolve(page([{ ...key, keyAlias: '恢复授权后的列表' }]));
     await flushPromises();
     expect(wrapper.get('tbody').text()).toContain('恢复授权后的列表');
@@ -245,14 +245,14 @@ describe('我的密钥页面', () => {
     setKmsMe({ ...kmsState.me!, principalId: 'iam:next' });
     if (completion === 'resolve') stale.resolve(page([key])); else stale.reject(new Error('旧本人列表错误'));
     await flushPromises();
-    expect(wrapper.get('tbody').text()).not.toContain(key.keyAlias);
+    expect(wrapper.text()).not.toContain(key.keyAlias);
     expect(wrapper.text()).not.toContain('旧本人列表错误');
     current.resolve(page([{ ...key, keyAlias: '新身份密钥' }]));
     await flushPromises();
     expect(wrapper.get('tbody').text()).toContain('新身份密钥');
     setKmsMe(null);
     await flushPromises();
-    expect(wrapper.get('tbody').text()).not.toContain('新身份密钥');
+    expect(wrapper.text()).not.toContain('新身份密钥');
     expect(api.listMyKmsKeys).toHaveBeenCalledTimes(2);
   });
 
@@ -263,19 +263,19 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView, { global: { stubs: { KeyDetails: true } } });
     await flushPromises();
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue('旧创建');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('旧创建');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     setKmsMe({ ...kmsState.me!, principalId: 'iam:next' });
     await flushPromises();
     expect(wrapper.find('[aria-label="新建密钥"]').exists()).toBe(false);
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue('新创建');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('新创建');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     if (completion === 'resolve') stale.resolve(key); else stale.reject(new Error('旧创建错误'));
     await flushPromises();
     expect(wrapper.findComponent(KeyDetails).exists()).toBe(false);
     expect(wrapper.text()).not.toContain('旧创建错误');
-    expect(wrapper.get('form button[type="submit"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[role="dialog"] form.kms-form button[type="submit"]').attributes('disabled')).toBeDefined();
     expect(api.createKmsKey.mock.calls[1][1]).not.toBe(api.createKmsKey.mock.calls[0][1]);
     current.resolve({ ...key, keyRef: 'next-created' });
     await flushPromises();
@@ -292,20 +292,20 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView, { global: { stubs: { KeyDetails: true } } });
     await flushPromises();
     await button('销毁政策').trigger('click');
-    if (kind === 'save') { await flushPromises(); await wrapper.get('form').trigger('submit'); }
+    if (kind === 'save') { await flushPromises(); await wrapper.get('[role="dialog"] form.kms-form').trigger('submit'); }
     api.loadMyDestructionPolicy.mockResolvedValue({ ...policy, ownerPrincipalId: 'iam:next', minScheduleAheadSeconds: 10800, maxScheduleAheadSeconds: 14400 });
     setKmsMe({ ...kmsState.me!, principalId: 'iam:next' });
     await flushPromises();
     expect(wrapper.find('[aria-label="销毁窗口政策"]').exists()).toBe(false);
     await button('销毁政策').trigger('click');
     await flushPromises();
-    if (kind === 'save') await wrapper.get('form').trigger('submit');
+    if (kind === 'save') await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     if (completion === 'resolve') stale.resolve(policy); else stale.reject(new Error('旧政策错误'));
     await flushPromises();
-    expect(wrapper.findAll('form input[type="number"]')[0].element).toHaveProperty('value', '3');
+    expect(wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].element).toHaveProperty('value', '3');
     expect(wrapper.text()).not.toContain('旧政策错误');
     if (kind === 'save') {
-      expect(wrapper.get('form button[type="submit"]').attributes('disabled')).toBeDefined();
+      expect(wrapper.get('[role="dialog"] form.kms-form button[type="submit"]').attributes('disabled')).toBeDefined();
       currentSave.resolve(policy);
       await flushPromises();
       expect(wrapper.find('[aria-label="销毁窗口政策"]').exists()).toBe(false);
@@ -323,17 +323,17 @@ describe('我的密钥页面', () => {
     wrapper.getComponent(Pagination).vm.$emit('update:current', 3);
     await flushPromises();
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue(created.keyAlias);
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue(created.keyAlias);
     api.listMyKmsKeys.mockResolvedValueOnce(page([]));
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
-    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 100, alias: undefined, state: undefined });
+    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 20, alias: undefined, state: undefined });
     expect(wrapper.get('input[aria-label="按别名筛选"]').element).toHaveProperty('value', '');
     expect(wrapper.get('button[aria-label="按状态筛选"]').text()).toContain('全部状态');
     expect(wrapper.getComponent(KeyDetails).props()).toMatchObject({ keyRef: 'new-key', initialKey: { ...created, ownerPrincipalId: 'iam:owner' } });
     expect(wrapper.get('[role="status"]').text()).toContain('密钥已创建');
     api.listMyKmsKeys.mockResolvedValueOnce(page([]));
-    await button('查询').trigger('click');
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
     expect(wrapper.findComponent(KeyDetails).props('keyRef')).toBe(created.keyRef);
   });
@@ -345,9 +345,9 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView, { global: { stubs: { KeyPublicKeys: true } } });
     await flushPromises();
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue(created.keyAlias);
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue(created.keyAlias);
     api.listMyKmsKeys.mockRejectedValueOnce(new Error('列表读取失败'));
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.getMyKmsKey).toHaveBeenCalledWith('created-key');
     expect(wrapper.get('.entity-drawer').text()).toContain('新创建的密钥');
@@ -369,13 +369,13 @@ describe('我的密钥页面', () => {
     if (action === 'create') {
       api.createKmsKey.mockReturnValueOnce(pending.promise);
       await button('新建密钥').trigger('click');
-      await wrapper.get('form input[maxlength]').setValue('卸载测试');
+      await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('卸载测试');
     } else {
       api.saveMyDestructionPolicy.mockReturnValueOnce(pending.promise);
       await button('销毁政策').trigger('click');
       await flushPromises();
     }
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     wrapper.unmount();
     pending.resolve(action === 'create' ? key : policy);
     await flushPromises();
@@ -385,16 +385,16 @@ describe('我的密钥页面', () => {
   it('详情入口调用真实本人接口，详情可编辑政策并在保存后回读关联窗口', async () => {
     wrapper = mount(MyKeysView, { global: { stubs: { KeyPublicKeys: true } } });
     await flushPromises();
-    await wrapper.get('button[aria-label="查看我的签名密钥详情"]').trigger('click');
+    await wrapper.get('button[aria-label="打开我的签名密钥详情"]').trigger('click');
     await flushPromises();
-    expect(wrapper.get('button[aria-label="查看我的签名密钥详情"]').text()).toBe('查看详情');
-    expect(wrapper.get('button[aria-label="查看我的签名密钥详情"]').find('svg').exists()).toBe(false);
+    expect(wrapper.get('button[aria-label="打开我的签名密钥详情"]').text()).toBe('查看详情');
+    expect(wrapper.get('button[aria-label="打开我的签名密钥详情"]').find('svg').exists()).toBe(false);
     expect(api.getMyKmsKey).toHaveBeenCalledWith('mine');
     expect(wrapper.get('[aria-label="密钥详情"]').text()).toContain('归属人销毁政策');
     await button('修改销毁政策').trigger('click');
     await flushPromises();
     expect(wrapper.get('[aria-label="销毁窗口政策"]').text()).toContain('我名下的全部密钥');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.loadMyDestructionPolicy).toHaveBeenCalledTimes(3);
     wrapper.findComponent(KeyDetails).vm.$emit('changed');
@@ -410,16 +410,16 @@ describe('我的密钥页面', () => {
     await flushPromises();
     wrapper.findComponent(Pagination).vm.$emit('update:current', 3);
     await flushPromises();
-    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 3, size: 100, alias: undefined, state: undefined });
-    wrapper.findComponent(Pagination).vm.$emit('update:pageSize', 20);
+    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 3, size: 20, alias: undefined, state: undefined });
+    wrapper.findComponent(Pagination).vm.$emit('update:pageSize', 50);
     await flushPromises();
-    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 20, alias: undefined, state: undefined });
+    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 50, alias: undefined, state: undefined });
     wrapper.findComponent(Pagination).vm.$emit('update:current', 2);
     await flushPromises();
     await wrapper.get('input[aria-label="按别名筛选"]').setValue('签名');
-    await button('查询').trigger('click');
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
-    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 20, alias: '签名', state: undefined });
+    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 50, alias: '签名', state: undefined });
   });
 
   it('变更后保留当前页，页码越界时回读最后有效页，列表缺少所选密钥仍保留详情', async () => {
@@ -428,14 +428,14 @@ describe('我的密钥页面', () => {
     await flushPromises();
     wrapper.findComponent(Pagination).vm.$emit('update:current', 3);
     await flushPromises();
-    await wrapper.get('button[aria-label="查看我的签名密钥详情"]').trigger('click');
-    api.listMyKmsKeys.mockResolvedValueOnce({ ...page([]), total: 100 }).mockResolvedValueOnce({ ...page([key]), total: 100 });
+    await wrapper.get('button[aria-label="打开我的签名密钥详情"]').trigger('click');
+    api.listMyKmsKeys.mockResolvedValueOnce({ ...page([]), total: 20 }).mockResolvedValueOnce({ ...page([key]), total: 20 });
     wrapper.findComponent(KeyDetails).vm.$emit('changed');
     await flushPromises();
     expect(api.listMyKmsKeys.mock.calls.slice(-2).map(call => call[0].page)).toEqual([3, 1]);
     expect(wrapper.findComponent(Pagination).props('current')).toBe(1);
     api.listMyKmsKeys.mockResolvedValueOnce(page([]));
-    await button('查询').trigger('click');
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
     expect(wrapper.findComponent(KeyDetails).props('keyRef')).toBe(key.keyRef);
   });
@@ -444,9 +444,9 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView, { global: { stubs: { KeyPublicKeys: true } } });
     await flushPromises();
     await choose('按状态筛选', '活动');
-    await button('查询').trigger('click');
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
-    await wrapper.get('button[aria-label="查看我的签名密钥详情"]').trigger('click');
+    await wrapper.get('button[aria-label="打开我的签名密钥详情"]').trigger('click');
     await flushPromises();
     const due = new Date(Date.now() + 1.5 * 3600000);
     const local = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}T${String(due.getHours()).padStart(2, '0')}:${String(due.getMinutes()).padStart(2, '0')}`;
@@ -456,15 +456,15 @@ describe('我的密钥页面', () => {
     await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
     await flushPromises();
     expect(api.scheduleMyKmsDestruction).toHaveBeenCalledWith(key.keyRef, new Date(local).toISOString(), key.rowVersion, expect.any(String));
-    expect(wrapper.get('.entity-drawer .kms-facts').text()).toContain('PENDING_DESTRUCTION');
+    expect(wrapper.get('.entity-drawer .detail-list').text()).toContain('待销毁');
     expect(wrapper.get('.entity-drawer [role="status"]').text()).toContain('安排销毁成功');
-    expect(wrapper.get('tbody').text()).toContain('当前筛选条件下没有匹配的密钥');
+    expect(wrapper.get('.data-table-placeholder[role="status"]').text()).toContain('当前筛选条件下没有匹配的密钥');
   });
 
   it.each(['cancel', 'backdrop', 'escape'])('详情中的政策通过%s关闭时保留抽屉并恢复焦点', async (entry) => {
     wrapper = mount(MyKeysView, { attachTo: document.body, global: { stubs: { KeyPublicKeys: true } } });
     await flushPromises();
-    await wrapper.get('button[aria-label="查看我的签名密钥详情"]').trigger('click');
+    await wrapper.get('button[aria-label="打开我的签名密钥详情"]').trigger('click');
     await flushPromises();
     const source = button('修改销毁政策');
     (source.element as HTMLElement).focus();
@@ -490,7 +490,7 @@ describe('我的密钥页面', () => {
   it.each(['create', 'policy'])('上层%s弹窗消费Escape，后续document监听器只收到下一次关闭详情的事件', async (action) => {
     wrapper = mount(MyKeysView, { global: { stubs: { KeyPublicKeys: true } } });
     await flushPromises();
-    await wrapper.get('button[aria-label="查看我的签名密钥详情"]').trigger('click');
+    await wrapper.get('button[aria-label="打开我的签名密钥详情"]').trigger('click');
     await flushPromises();
     await button(action === 'create' ? '新建密钥' : '修改销毁政策').trigger('click');
     await flushPromises();
@@ -520,12 +520,12 @@ describe('我的密钥页面', () => {
     else api.saveMyDestructionPolicy.mockReturnValueOnce(pending.promise);
     wrapper = mount(MyKeysView, { global: { stubs: { KeyPublicKeys: true } } });
     await flushPromises();
-    await wrapper.get('button[aria-label="查看我的签名密钥详情"]').trigger('click');
+    await wrapper.get('button[aria-label="打开我的签名密钥详情"]').trigger('click');
     await flushPromises();
     await button(action === 'create' ? '新建密钥' : '修改销毁政策').trigger('click');
     await flushPromises();
-    if (action === 'create') await wrapper.get('form input[maxlength]').setValue('提交中的密钥');
-    await wrapper.get('form').trigger('submit');
+    if (action === 'create') await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('提交中的密钥');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     const nextLayer = vi.fn();
     document.addEventListener('keydown', nextLayer);
     try {
@@ -561,14 +561,14 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView);
     await flushPromises();
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue('第一把');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('第一把');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.createKmsKey.mock.calls[1]).toEqual(api.createKmsKey.mock.calls[0]);
-    await wrapper.get('form input[maxlength]').setValue('第二把');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('第二把');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.createKmsKey.mock.calls[2][1]).not.toEqual(api.createKmsKey.mock.calls[0][1]);
   });
@@ -589,7 +589,7 @@ describe('我的密钥页面', () => {
     api.listMyKmsKeys.mockReturnValueOnce(stale.promise).mockReturnValueOnce(latest.promise);
     wrapper = mount(MyKeysView);
     await wrapper.get('input[aria-label="按别名筛选"]').setValue('最新');
-    await wrapper.get('input[aria-label="按别名筛选"]').trigger('keyup', { key: 'Enter' });
+    await wrapper.get('form.kms-filters').trigger('submit');
     expect(api.listMyKmsKeys).toHaveBeenCalledTimes(2);
     const latestKey = { ...key, keyRef: 'mine-latest', keyAlias: '最新个人密钥' };
     latest.resolve(page([latestKey]));
@@ -600,7 +600,7 @@ describe('我的密钥页面', () => {
     expect(wrapper.get('tbody').text()).toContain('最新个人密钥');
     expect(wrapper.get('tbody').text()).not.toContain('我的签名密钥');
     expect(wrapper.find('[role="alert"]').exists()).toBe(false);
-    expect(wrapper.get('.kms-table-wrap').attributes('aria-busy')).toBe('false');
+    expect(wrapper.find('.data-table-placeholder[role="status"]').exists()).toBe(false);
   });
 
   it('显示加载、归属空态和筛选空态，查询使用所选状态', async () => {
@@ -608,17 +608,17 @@ describe('我的密钥页面', () => {
     api.listMyKmsKeys.mockReturnValueOnce(pending.promise).mockResolvedValue(page([]));
     wrapper = mount(MyKeysView);
     await nextTick();
-    expect(wrapper.text()).toContain('正在加载密钥');
+    expect(wrapper.get('tbody td.data-table-placeholder').text()).toContain('加载中');
     pending.resolve(page([]));
     await flushPromises();
     expect(wrapper.text()).toContain('暂无密钥，点击右上角');
     await wrapper.get('input[aria-label="按别名筛选"]').setValue('支付');
     await choose('按状态筛选', '待销毁');
-    await button('查询').trigger('click');
+    await wrapper.get('form.kms-filters').trigger('submit');
     await flushPromises();
-    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 100, alias: '支付', state: 'PENDING_DESTRUCTION' });
+    expect(api.listMyKmsKeys).toHaveBeenLastCalledWith({ page: 1, size: 20, alias: '支付', state: 'PENDING_DESTRUCTION' });
     expect(wrapper.text()).toContain('当前筛选条件下没有匹配的密钥');
-    await wrapper.get('input[aria-label="按别名筛选"]').trigger('keyup', { key: 'Enter' });
+    await wrapper.get('form.kms-filters').trigger('submit');
     expect(api.listMyKmsKeys).toHaveBeenCalledTimes(3);
   });
 
@@ -641,23 +641,23 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView);
     await flushPromises();
     await button('新建密钥').trigger('click');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(api.createKmsKey).not.toHaveBeenCalled();
     await button('取消').trigger('click');
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue(' 加密密钥 ');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue(' 加密密钥 ');
     await choose('用途', '加解密（ENCRYPT）');
     expect(wrapper.get('button[aria-label="算法"]').text()).toContain('AES-256-GCM');
     await choose('算法', 'AES-256-GCM（对称）');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.createKmsKey).toHaveBeenCalledWith({ keyAlias: '加密密钥', purpose: 'ENCRYPT', algorithm: 'AES_256_GCM' }, expect.any(String));
     expect(wrapper.find('[aria-label="新建密钥"]').exists()).toBe(false);
     expect(wrapper.find('.entity-drawer').exists()).toBe(true);
     expect(api.listMyKmsKeys).toHaveBeenCalledTimes(2);
     await button('新建密钥').trigger('click');
-    expect(wrapper.get('form input[maxlength]').element).toHaveProperty('value', '');
+    expect(wrapper.get('[role="dialog"] form.kms-form input[maxlength]').element).toHaveProperty('value', '');
     expect(wrapper.get('button[aria-label="算法"]').text()).toContain('ES256');
     await wrapper.get('.dialog-backdrop').trigger('click');
     expect(wrapper.find('[aria-label="新建密钥"]').exists()).toBe(false);
@@ -670,10 +670,10 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView);
     await flushPromises();
     await button('新建密钥').trigger('click');
-    await wrapper.get('form input[maxlength]').setValue('重试密钥');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form input[maxlength]').setValue('重试密钥');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(button('取消').attributes('disabled')).toBeDefined();
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await wrapper.get('.dialog-backdrop').trigger('click');
     expect(api.createKmsKey).toHaveBeenCalledTimes(1);
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
@@ -681,8 +681,8 @@ describe('我的密钥页面', () => {
     await flushPromises();
     expect(wrapper.get('[role="alert"]').text()).toContain('创建失败');
     expect(wrapper.get('[role="dialog"] [role="alert"]').text()).toContain('创建失败');
-    expect(wrapper.get('form input[maxlength]').element).toHaveProperty('value', '重试密钥');
-    await wrapper.get('form').trigger('submit');
+    expect(wrapper.get('[role="dialog"] form.kms-form input[maxlength]').element).toHaveProperty('value', '重试密钥');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(wrapper.find('[aria-label="新建密钥"]').exists()).toBe(false);
     expect(wrapper.find('.entity-drawer').exists()).toBe(true);
@@ -696,26 +696,26 @@ describe('我的密钥页面', () => {
     wrapper = mount(MyKeysView);
     await flushPromises();
     await button('销毁政策').trigger('click');
-    expect(wrapper.get('form input[type="number"]').attributes('disabled')).toBeDefined();
-    expect(wrapper.get('form button[type="submit"]').attributes('disabled')).toBeDefined();
-    await wrapper.get('form').trigger('submit');
+    expect(wrapper.get('[role="dialog"] form.kms-form input[type="number"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[role="dialog"] form.kms-form button[type="submit"]').attributes('disabled')).toBeDefined();
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(api.saveMyDestructionPolicy).not.toHaveBeenCalled();
     reading.resolve(policy);
     await flushPromises();
-    const fields = wrapper.findAll('form input[type="number"]');
+    const fields = wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]');
     expect(fields[0].element).toHaveProperty('value', '1');
     expect(fields[1].element).toHaveProperty('value', '2');
     await fields[0].setValue('1.5');
     expect((fields[0].element as HTMLInputElement).checkValidity()).toBe(true);
     await fields[1].setValue('');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(api.saveMyDestructionPolicy).toHaveBeenCalledWith({ minScheduleAheadSeconds: 5400, maxScheduleAheadSeconds: null });
     expect(button('取消').attributes('disabled')).toBeDefined();
     await wrapper.get('.dialog-backdrop').trigger('click');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await nextTick();
     expect(wrapper.find('[aria-label="销毁窗口政策"]').exists()).toBe(true);
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(api.saveMyDestructionPolicy).toHaveBeenCalledTimes(1);
     saving.resolve(policy);
     await flushPromises();
@@ -730,11 +730,11 @@ describe('我的密钥页面', () => {
     await button('销毁政策').trigger('click');
     await flushPromises();
     expect(wrapper.get('[role="dialog"] [role="alert"]').text()).toContain('政策读取失败');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(api.saveMyDestructionPolicy).not.toHaveBeenCalled();
     await button('重试').trigger('click');
     await flushPromises();
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.saveMyDestructionPolicy).toHaveBeenCalledWith({ minScheduleAheadSeconds: null, maxScheduleAheadSeconds: null });
   });
@@ -744,15 +744,15 @@ describe('我的密钥页面', () => {
     await flushPromises();
     await button('销毁政策').trigger('click');
     await flushPromises();
-    const fields = wrapper.findAll('form input[type="number"]');
+    const fields = wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]');
     await fields[0].setValue(min);
     await fields[1].setValue(max);
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(wrapper.get('[role="dialog"] [role="alert"]').text()).toContain('销毁窗口无效');
     expect(api.saveMyDestructionPolicy).not.toHaveBeenCalled();
     await fields[0].setValue('0');
     await fields[1].setValue('2');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.saveMyDestructionPolicy).toHaveBeenCalledWith({ minScheduleAheadSeconds: 0, maxScheduleAheadSeconds: 7200 });
   });
@@ -763,10 +763,10 @@ describe('我的密钥页面', () => {
     await flushPromises();
     await button('销毁政策').trigger('click');
     await flushPromises();
-    const fields = wrapper.findAll('form input[type="number"]');
+    const fields = wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]');
     await fields[fieldIndex].setValue('1e308');
     expect((fields[fieldIndex].element as HTMLInputElement).checkValidity()).toBe(false);
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(wrapper.get('[role="dialog"] [role="alert"]').text()).toContain('小时数过大');
     expect(api.saveMyDestructionPolicy).not.toHaveBeenCalled();
   });
@@ -777,16 +777,16 @@ describe('我的密钥页面', () => {
     await flushPromises();
     await button('销毁政策').trigger('click');
     await flushPromises();
-    const fields = wrapper.findAll('form input[type="number"]');
+    const fields = wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]');
     expect(fields[fieldIndex].attributes('max')).toBe('87600');
     await fields[fieldIndex].setValue('87601');
     expect((fields[fieldIndex].element as HTMLInputElement).checkValidity()).toBe(false);
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     expect(wrapper.get('[role="alert"]').text()).toContain('不能超过 87600 小时');
     expect(api.saveMyDestructionPolicy).not.toHaveBeenCalled();
     await fields[fieldIndex].setValue('87600');
     expect((fields[fieldIndex].element as HTMLInputElement).checkValidity()).toBe(true);
-    await wrapper.get('form').trigger('submit');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(api.saveMyDestructionPolicy).toHaveBeenCalledWith({
       minScheduleAheadSeconds: fieldIndex === 0 ? 315_360_000 : null,
@@ -801,12 +801,12 @@ describe('我的密钥页面', () => {
     await flushPromises();
     await button('销毁政策').trigger('click');
     await flushPromises();
-    await wrapper.findAll('form input[type="number"]')[1].setValue('2');
-    await wrapper.get('form').trigger('submit');
+    await wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[1].setValue('2');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(wrapper.get('[role="dialog"] [role="alert"]').text()).toContain('政策保存失败');
-    expect(wrapper.findAll('form input[type="number"]')[1].element).toHaveProperty('value', '2');
-    await wrapper.get('form').trigger('submit');
+    expect(wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[1].element).toHaveProperty('value', '2');
+    await wrapper.get('[role="dialog"] form.kms-form').trigger('submit');
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
   });
@@ -820,10 +820,10 @@ describe('我的密钥页面', () => {
     await button('取消').trigger('click');
     await button('销毁政策').trigger('click');
     await flushPromises();
-    expect(wrapper.findAll('form input[type="number"]')[0].element).toHaveProperty('value', '3');
+    expect(wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].element).toHaveProperty('value', '3');
     stale.resolve(policy);
     await flushPromises();
-    expect(wrapper.findAll('form input[type="number"]')[0].element).toHaveProperty('value', '3');
+    expect(wrapper.findAll('[role="dialog"] form.kms-form input[type="number"]')[0].element).toHaveProperty('value', '3');
     await wrapper.get('.dialog-backdrop').trigger('click');
     expect(api.saveMyDestructionPolicy).not.toHaveBeenCalled();
   });

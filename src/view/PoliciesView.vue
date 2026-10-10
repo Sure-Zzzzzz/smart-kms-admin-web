@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { principalLabel, principalSourceKind, principalSourceText, readableTime } from '../support/principal';
-import { RefreshCw, Search, Trash2 } from 'lucide-vue-next';
+import { Plus, RefreshCw, Search, Trash2 } from 'lucide-vue-next';
+import DataTable, { type DataTableColumn } from '@sure-zzzzzz/simple-iam-theme-contract/DataTable';
 import Dialog from '@sure-zzzzzz/simple-iam-theme-contract/Dialog';
 import FormSelect from '@sure-zzzzzz/simple-iam-theme-contract/FormSelect';
-import PageHeader from '@sure-zzzzzz/simple-iam-theme-contract/PageHeader';
 import Pagination from '@sure-zzzzzz/simple-iam-theme-contract/Pagination';
 import { createKmsPolicy, KmsApiError, listAdminKmsKeys, listAdminKmsPolicies, revokeKmsPolicy, type KmsAdminPolicy, type KmsKey } from '../api/kmsApi';
 import { hasKmsApiPermission, kmsState } from '../kmsState';
+import { policyOperationLabel } from '../support/kmsDisplay';
 
 // 主列表：治理视角全量策略分页；创建走弹窗：搜索并锚定一把密钥后授予。
 const policies = ref<KmsAdminPolicy[]>([]);
 const currentPage = ref(1);
-const pageSize = ref(100);
+const pageSize = ref(20);
 const totalElements = ref(0);
 const totalPages = computed(() => Math.max(1, Math.ceil(totalElements.value / pageSize.value)));
 const filter = reactive({ alias: '', principalId: '', operation: '' });
@@ -20,6 +21,16 @@ const loading = ref(false);
 const errorMessage = ref('');
 const message = ref('');
 const canManagePolicies = computed(() => hasKmsApiPermission('kms.key.policy'));
+
+const policyColumns: DataTableColumn[] = [
+  { key: 'keyAlias', label: '密钥' },
+  { key: 'ownerPrincipalId', label: '归属主体' },
+  { key: 'principalId', label: '被授权主体' },
+  { key: 'keyVersion', label: '版本', width: '80px', nowrap: true },
+  { key: 'operation', label: '授权操作', width: '112px', nowrap: true },
+  { key: 'expiresAt', label: '到期时间', width: '176px', nowrap: true },
+  { key: 'actions', label: '操作', width: '90px', align: 'right', nowrap: true }
+];
 const operationFilterOptions = [
   { label: '全部操作', value: '' },
   { label: '签名', value: 'SIGN' },
@@ -31,6 +42,13 @@ const operationFilterOptions = [
 let policyLoadSequence = 0;
 let active = true;
 let identitySequence = 0;
+const emptyText = computed(() =>
+  !canManagePolicies.value
+    ? '当前身份没有读取策略的权限'
+    : filter.alias || filter.principalId || filter.operation
+      ? '当前筛选条件下没有匹配的策略'
+      : '当前授权范围内暂无策略'
+);
 
 // 创建弹窗：密钥搜索与选择
 const createOpen = ref(false);
@@ -92,6 +110,10 @@ async function loadPolicies() {
 }
 
 function searchPolicies() { currentPage.value = 1; void loadPolicies(); }
+function resetFilters() {
+  Object.assign(filter, { alias: '', principalId: '', operation: '' });
+  searchPolicies();
+}
 function selectPage(page: number) { currentPage.value = page; void loadPolicies(); }
 function selectPageSize(size: number) { pageSize.value = size; searchPolicies(); }
 
@@ -253,24 +275,31 @@ onBeforeUnmount(() => { active = false; ++policyLoadSequence; ++keysLoadSequence
 
 <template>
   <section class="kms-page">
-    <PageHeader
-      title="密钥策略"
-      description="精确授权"
-    >
-      <template #actions>
+    <header class="page-header kms-list-page-header">
+      <div class="kms-title-line">
+        <h1>策略</h1>
+      </div>
+      <div class="page-header-actions">
         <button
           v-if="canManagePolicies"
           class="button-primary"
           type="button"
           @click="openCreate"
         >
+          <Plus
+            :size="17"
+            aria-hidden="true"
+          />
           创建策略
         </button>
-      </template>
-    </PageHeader>
+      </div>
+    </header>
+    <p class="kms-page-subtitle">
+      按密钥、主体、版本和操作维护精确授权策略。
+    </p>
     <p
       v-if="errorMessage"
-      class="kms-message danger"
+      class="admin-message error"
       role="alert"
     >
       <span>{{ errorMessage }}</span>
@@ -288,7 +317,7 @@ onBeforeUnmount(() => { active = false; ++policyLoadSequence; ++keysLoadSequence
     </p>
     <p
       v-if="message"
-      class="kms-message success"
+      class="admin-message success"
       role="status"
     >
       {{ message }}
@@ -313,7 +342,7 @@ onBeforeUnmount(() => { active = false; ++policyLoadSequence; ++keysLoadSequence
           <h2>创建策略</h2>
           <p
             v-if="createErrorMessage"
-            class="kms-message danger"
+            class="admin-message error"
             role="alert"
           >
             {{ createErrorMessage }}
@@ -402,109 +431,128 @@ onBeforeUnmount(() => { active = false; ++policyLoadSequence; ++keysLoadSequence
         </form>
       </section>
     </div>
-    <section class="admin-data-surface">
-      <div class="kms-surface-header">
-        <div><h2>策略列表</h2><span>当前授权范围内的全部密钥策略</span></div><span>{{ totalElements }} 项</span>
+    <section class="panel kms-list-panel">
+      <div class="kms-panel-heading">
+        <h2>策略列表 <span v-if="!loading && !errorMessage">{{ totalElements }}</span></h2>
       </div>
-      <div class="kms-toolbar">
-        <input
-          v-model="filter.alias"
-          aria-label="按密钥别名筛选"
-          placeholder="密钥别名"
-          @keyup.enter="searchPolicies"
-        >
-        <input
-          v-model.trim="filter.principalId"
-          aria-label="按被授权主体筛选"
-          placeholder="iam:人员ID / aksk:客户端ID"
-          @keyup.enter="searchPolicies"
-        >
-        <FormSelect
-          v-model="filter.operation"
-          aria-label="按操作筛选"
-          :options="operationFilterOptions"
-        />
-        <button
-          type="button"
-          class="button-secondary"
-          :disabled="loading"
-          @click="searchPolicies"
-        >
-          <Search
-            :size="16"
-            aria-hidden="true"
-          />查询
-        </button>
-      </div>
-      <div
-        class="kms-table-wrap"
-        :aria-busy="loading"
+      <form
+        class="kms-filters"
+        @submit.prevent="searchPolicies"
       >
-        <table class="responsive-table">
-          <thead><tr><th>密钥</th><th>归属主体</th><th>被授权主体</th><th>版本</th><th>操作</th><th>到期时间</th><th /></tr></thead><tbody>
-            <tr
-              v-for="policy in policies"
-              :key="policy.policyId"
-            >
-              <td><code :title="policy.keyRef">{{ policy.keyAlias }}</code></td>
-              <td>
-                <span
-                  v-if="principalSourceKind(policy.ownerPrincipalId)"
-                  class="status-badge neutral kms-owner-source"
-                  :title="policy.ownerPrincipalId"
-                >{{ principalSourceText(principalSourceKind(policy.ownerPrincipalId)) }}</span>
-                {{ principalLabel(policy.ownerPrincipalId, policy.ownerDisplayName) }}
-              </td>
-              <td>
-                <span
-                  v-if="principalSourceKind(policy.principalId)"
-                  class="status-badge neutral kms-owner-source"
-                  :title="policy.principalId"
-                >{{ principalSourceText(principalSourceKind(policy.principalId)) }}</span>
-                {{ principalLabel(policy.principalId, policy.principalDisplayName) }}
-              </td>
-              <td>{{ policy.keyVersion ?? '全部' }}</td><td>{{ policy.operation }}</td><td>{{ policy.expiresAt ? readableTime(policy.expiresAt) : '长期有效' }}</td><td>
-                <button
-                  v-if="canManagePolicies"
-                  type="button"
-                  class="table-action button-danger"
-                  :disabled="submitting || loading"
-                  aria-label="撤销策略"
-                  @click="requestRevoke(policy)"
-                >
-                  <Trash2
-                    :size="16"
-                    aria-hidden="true"
-                  />
-                </button>
-              </td>
-            </tr><tr v-if="loading">
-              <td
-                colspan="7"
-                class="kms-empty"
-              >
-                正在加载策略...
-              </td>
-            </tr><tr v-else-if="policies.length === 0">
-              <td
-                colspan="7"
-                class="kms-empty"
-              >
-                {{ !canManagePolicies ? '当前身份没有读取策略的权限' : filter.alias || filter.principalId || filter.operation ? '当前筛选条件下没有匹配的策略' : '当前授权范围内暂无策略' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <label>密钥别名
+          <input
+            v-model="filter.alias"
+            type="search"
+            aria-label="按密钥别名筛选"
+            placeholder="全部密钥"
+          >
+        </label>
+        <label class="kms-filter-owner">被授权主体
+          <input
+            v-model.trim="filter.principalId"
+            type="search"
+            aria-label="按被授权主体筛选"
+            placeholder="iam:人员ID / aksk:客户端ID"
+          >
+        </label>
+        <div class="kms-filter-field">
+          <span>操作</span>
+          <FormSelect
+            v-model="filter.operation"
+            aria-label="按操作筛选"
+            :options="operationFilterOptions"
+          />
+        </div>
+        <div class="kms-filter-actions">
+          <button
+            type="submit"
+            class="button-primary"
+            :disabled="loading"
+          >
+            <Search
+              :size="16"
+              aria-hidden="true"
+            />查询
+          </button>
+          <button
+            type="button"
+            class="button-secondary"
+            :disabled="loading"
+            @click="resetFilters"
+          >
+            重置
+          </button>
+        </div>
+      </form>
+      <DataTable
+        v-if="policies.length > 0 || loading"
+        :columns="policyColumns"
+        :rows="policies"
+        row-key="policyId"
+        :loading="loading"
+        :empty-text="emptyText"
+        scroll-min-width="1100px"
+      >
+        <template #cell-keyAlias="{ row }">
+          <code :title="row.keyRef">{{ row.keyAlias }}</code>
+        </template>
+        <template #cell-ownerPrincipalId="{ row }">
+          <span
+            v-if="principalSourceKind(row.ownerPrincipalId)"
+            class="status-badge neutral kms-owner-source"
+            :title="row.ownerPrincipalId"
+          >{{ principalSourceText(principalSourceKind(row.ownerPrincipalId)) }}</span>
+          {{ principalLabel(row.ownerPrincipalId, row.ownerDisplayName) }}
+        </template>
+        <template #cell-principalId="{ row }">
+          <span
+            v-if="principalSourceKind(row.principalId)"
+            class="status-badge neutral kms-owner-source"
+            :title="row.principalId"
+          >{{ principalSourceText(principalSourceKind(row.principalId)) }}</span>
+          {{ principalLabel(row.principalId, row.principalDisplayName) }}
+        </template>
+        <template #cell-keyVersion="{ row }">
+          {{ row.keyVersion ?? '全部' }}
+        </template>
+        <template #cell-operation="{ row }">
+          {{ policyOperationLabel(row.operation) }}
+        </template>
+        <template #cell-expiresAt="{ row }">
+          {{ row.expiresAt ? readableTime(row.expiresAt) : '长期有效' }}
+        </template>
+        <template #cell-actions="{ row }">
+          <button
+            v-if="canManagePolicies"
+            type="button"
+            class="table-action kms-danger-action"
+            :disabled="submitting || loading"
+            aria-label="撤销策略"
+            @click="requestRevoke(row)"
+          >
+            <Trash2
+              :size="16"
+              aria-hidden="true"
+            />撤销
+          </button>
+        </template>
+      </DataTable>
+      <p
+        v-else-if="!errorMessage"
+        class="data-table-placeholder"
+        role="status"
+      >
+        {{ loading ? '正在加载策略…' : emptyText }}
+      </p>
       <div
         v-if="totalElements > 0"
+        class="kms-pagination-row"
         :inert="loading"
       >
         <Pagination
           :current="currentPage"
           :total="totalElements"
           :page-size="pageSize"
-          :page-size-options="[20, 50, 100]"
           @update:current="selectPage"
           @update:page-size="selectPageSize"
         />

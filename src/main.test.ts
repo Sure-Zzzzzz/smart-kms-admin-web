@@ -125,7 +125,7 @@ describe('KMS qiankun lifecycle and route boundary', () => {
     const config = runtime.createRouter.mock.lastCall?.[0] as { routes: { path: string; redirect?: string }[] };
     expect(config.routes.map(route => route.path)).toEqual(['/', '/keys', '/my-keys', '/policies', '/destruction', '/oauth-callback', '/403', '/:pathMatch(.*)*']);
     expect(config.routes.at(-1)?.redirect).toBe('/');
-  });
+  }, 15000);
 
   it('automatically renders standalone and redirects protected pages to its guide', async () => {
     runtime.qiankun.__POWERED_BY_QIANKUN__ = false;

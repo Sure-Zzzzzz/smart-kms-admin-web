@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { keyAlgorithmLabel, keyPurposeLabel, keyStateLabel } from '../support/kmsDisplay';
 import { principalLabel, principalSourceKind, principalSourceText } from '../support/principal';
+import DataTable, { type DataTableColumn } from '@sure-zzzzzz/simple-iam-theme-contract/DataTable';
 import Dialog from '@sure-zzzzzz/simple-iam-theme-contract/Dialog';
 import Drawer from '@sure-zzzzzz/simple-iam-theme-contract/Drawer';
 import { Copy, RefreshCw } from 'lucide-vue-next';
@@ -81,6 +83,12 @@ const dialogDescription = computed(() => {
 });
 function readableTime(value: string) { return new Date(value).toLocaleString(); }
 function jobStateLabel(state: string) { return ({ PENDING: '等待执行', CLAIMED: '执行中', COMPLETED: '已完成' } as Record<string, string>)[state] || state; }
+const destructionJobColumns: DataTableColumn[] = [
+  { key: 'keyVersion', label: '版本' },
+  { key: 'state', label: '任务状态' },
+  { key: 'dueAt', label: '销毁时间' },
+  { key: 'completedAt', label: '完成时间' }
+];
 function clearReads() {
   ++detailSequence;
   ++policySequence;
@@ -329,7 +337,7 @@ onBeforeUnmount(() => { ++detailSequence; ++policySequence; ++operationSequence;
       </p>
       <p
         v-if="errorMessage"
-        class="kms-message danger"
+        class="admin-message error"
         role="alert"
       >
         <span>{{ errorMessage }}</span>
@@ -348,63 +356,57 @@ onBeforeUnmount(() => { ++detailSequence; ++policySequence; ++operationSequence;
       </p>
       <p
         v-if="message"
-        class="kms-message success"
+        class="admin-message success"
         role="status"
       >
         {{ message }}
       </p>
       <template v-if="detail">
-        <dl class="kms-facts">
-          <div>
-            <dt>密钥标识</dt><dd class="kms-field-value">
-              {{ detail.keyRef }}<button
-                type="button"
-                class="table-action"
-                title="复制密钥标识"
-                aria-label="复制密钥标识"
-                @click="() => void copyKeyRef()"
-              >
-                <Copy
-                  :size="15"
-                  aria-hidden="true"
-                />
-              </button>
-            </dd>
-          </div>
-          <div>
-            <dt>归属主体</dt><dd>
-              <span
-                v-if="principalSourceKind(detail.ownerPrincipalId)"
-                class="status-badge neutral kms-owner-source"
-                :title="detail.ownerPrincipalId"
-              >{{ principalSourceText(principalSourceKind(detail.ownerPrincipalId)) }}</span> {{ detail.ownerPrincipalId ? principalLabel(detail.ownerPrincipalId, detail.ownerDisplayName) : '无法确定归属' }}<button
-                v-if="detail.ownerPrincipalId"
-                type="button"
-                class="table-action"
-                title="复制归属主体标识"
-                aria-label="复制归属主体标识"
-                @click="() => void copyOwnerPrincipalId()"
-              >
-                <Copy
-                  :size="15"
-                  aria-hidden="true"
-                />
-              </button>
-            </dd>
-          </div>
-          <div><dt>用途</dt><dd>{{ detail.purpose === 'SIGN' ? '签名（SIGN）' : '加解密（ENCRYPT）' }}</dd></div>
-          <div><dt>算法</dt><dd>{{ detail.algorithm }}</dd></div>
-          <div>
-            <dt>状态</dt><dd>
-              <span
-                class="status-badge"
-                :class="detail.state === 'ACTIVE' ? 'success' : detail.state === 'PENDING_DESTRUCTION' ? 'warning' : 'neutral'"
-              >{{ detail.state }}</span>
-            </dd>
-          </div>
-          <div><dt>活动版本</dt><dd>{{ detail.activeVersion ?? '-' }}</dd></div>
-          <div><dt>创建时间</dt><dd>{{ readableTime(detail.createdAt) }}</dd></div>
-          <div><dt>最近更新</dt><dd>{{ readableTime(detail.updatedAt) }}</dd></div>
+        <dl class="detail-list">
+          <dt>密钥标识</dt><dd class="kms-field-value">
+            {{ detail.keyRef }}<button
+              type="button"
+              class="table-action"
+              title="复制密钥标识"
+              aria-label="复制密钥标识"
+              @click="() => void copyKeyRef()"
+            >
+              <Copy
+                :size="15"
+                aria-hidden="true"
+              />
+            </button>
+          </dd>
+          <dt>归属主体</dt><dd>
+            <span
+              v-if="principalSourceKind(detail.ownerPrincipalId)"
+              class="status-badge neutral kms-owner-source"
+              :title="detail.ownerPrincipalId"
+            >{{ principalSourceText(principalSourceKind(detail.ownerPrincipalId)) }}</span> {{ detail.ownerPrincipalId ? principalLabel(detail.ownerPrincipalId, detail.ownerDisplayName) : '无法确定归属' }}<button
+              v-if="detail.ownerPrincipalId"
+              type="button"
+              class="table-action"
+              title="复制归属主体标识"
+              aria-label="复制归属主体标识"
+              @click="() => void copyOwnerPrincipalId()"
+            >
+              <Copy
+                :size="15"
+                aria-hidden="true"
+              />
+            </button>
+          </dd>
+          <dt>用途</dt><dd>{{ keyPurposeLabel(detail.purpose) }}</dd>
+          <dt>算法</dt><dd>{{ keyAlgorithmLabel(detail.algorithm) }}</dd>
+          <dt>状态</dt><dd>
+            <span
+              class="status-badge"
+              :class="detail.state === 'ACTIVE' ? 'success' : detail.state === 'PENDING_DESTRUCTION' ? 'warning' : 'neutral'"
+            >{{ keyStateLabel(detail.state) }}</span>
+          </dd>
+          <dt>活动版本</dt><dd>{{ detail.activeVersion ?? '-' }}</dd>
+          <dt>创建时间</dt><dd>{{ readableTime(detail.createdAt) }}</dd>
+          <dt>最近更新</dt><dd>{{ readableTime(detail.updatedAt) }}</dd>
         </dl>
         <div
           v-if="canManageKeys"
@@ -463,7 +465,7 @@ onBeforeUnmount(() => { ++detailSequence; ++policySequence; ++operationSequence;
           </p>
           <p
             v-else-if="destructionErrorMessage"
-            class="kms-message danger"
+            class="admin-message error"
             role="alert"
           >
             <span>{{ destructionErrorMessage }}</span>
@@ -486,23 +488,22 @@ onBeforeUnmount(() => { ++detailSequence; ++policySequence; ++operationSequence;
             >
               暂无销毁任务。
             </p>
-            <div
+            <DataTable
               v-else
-              class="kms-table-wrap"
+              :columns="destructionJobColumns"
+              :rows="destruction.items"
+              row-key="keyVersion"
             >
-              <table class="responsive-table">
-                <thead><tr><th>版本</th><th>任务状态</th><th>销毁时间</th><th>完成时间</th></tr></thead>
-                <tbody>
-                  <tr
-                    v-for="job in destruction.items"
-                    :key="job.keyVersion"
-                  >
-                    <td>{{ job.keyVersion }}</td><td>{{ jobStateLabel(job.state) }}</td>
-                    <td>{{ readableTime(job.dueAt) }}</td><td>{{ job.completedAt ? readableTime(job.completedAt) : '-' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+              <template #cell-state="{ row }">
+                {{ jobStateLabel(row.state) }}
+              </template>
+              <template #cell-dueAt="{ row }">
+                {{ readableTime(row.dueAt) }}
+              </template>
+              <template #cell-completedAt="{ row }">
+                {{ row.completedAt ? readableTime(row.completedAt) : '-' }}
+              </template>
+            </DataTable>
             <p
               v-if="detail.state === 'PENDING_DESTRUCTION' && !destruction.cancelEligible"
               class="kms-policy-hint"
@@ -555,7 +556,7 @@ onBeforeUnmount(() => { ++detailSequence; ++policySequence; ++operationSequence;
           </p>
           <p
             v-else-if="policyErrorMessage"
-            class="kms-message danger"
+            class="admin-message error"
             role="alert"
           >
             <span>{{ policyErrorMessage }}</span><button
@@ -601,6 +602,7 @@ onBeforeUnmount(() => { ++detailSequence; ++policySequence; ++operationSequence;
         :open="operation !== null"
         :title="dialogTitle"
         :description="dialogDescription"
+        :variant="operation?.action === 'schedule' ? 'danger' : 'confirm'"
         :confirm-label="operation ? labels[operation.action] : ''"
         :pending="submitting"
         @close="closeOperation"

@@ -9,7 +9,7 @@ useKmsModals(root);
 const standalone = computed(() => !kmsState.bridge);
 const menus = [
   { to: '/my-keys', label: '我的密钥', permission: 'kms.page.my-keys' },
-  { to: '/keys', label: '密钥', permission: 'kms.page.keys' },
+  { to: '/keys', label: '密钥管理', permission: 'kms.page.keys' },
   { to: '/policies', label: '策略', permission: 'kms.page.policies' },
   { to: '/destruction', label: '销毁任务', permission: 'kms.page.destruction' }
 ];

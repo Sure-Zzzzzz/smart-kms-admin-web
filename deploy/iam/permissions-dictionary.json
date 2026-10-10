@@ -1,0 +1,18 @@
+{
+  "permissions": [
+    { "code": "kms.page.my-keys", "name": "KMS 我的密钥页", "type": "page", "built_in": 0 },
+    { "code": "kms.page.keys", "name": "KMS 密钥治理页", "type": "page", "built_in": 0 },
+    { "code": "kms.page.policies", "name": "KMS 策略页", "type": "page", "built_in": 0 },
+    { "code": "kms.page.destruction", "name": "KMS 销毁任务页", "type": "page", "built_in": 0 },
+    { "code": "kms.me.read", "name": "KMS 当前主体权限快照", "type": "api", "built_in": 0 },
+    { "code": "kms.key.read", "name": "KMS 密钥读取", "type": "api", "built_in": 0 },
+    { "code": "kms.key.manage", "name": "KMS 密钥管理", "type": "api", "built_in": 0 },
+    { "code": "kms.key.policy", "name": "KMS 密钥使用策略管理", "type": "api", "built_in": 0 },
+    { "code": "kms.key.destroy", "name": "KMS 密钥销毁", "type": "api", "built_in": 0 },
+    { "code": "kms.sign", "name": "KMS 签名", "type": "api", "built_in": 0 },
+    { "code": "kms.verify", "name": "KMS 验签", "type": "api", "built_in": 0 },
+    { "code": "kms.encrypt", "name": "KMS 加密", "type": "api", "built_in": 0 },
+    { "code": "kms.decrypt", "name": "KMS 解密", "type": "api", "built_in": 0 },
+    { "code": "kms.read-public-key", "name": "KMS 公钥读取", "type": "api", "built_in": 0 }
+  ]
+}

@@ -44,7 +44,7 @@ function button(label: string) {
   expect(node, label).toBeDefined();
   return node!;
 }
-async function confirm() { await wrapper.get('[role="alertdialog"] .button-danger').trigger('click'); await flushPromises(); }
+async function confirm() { await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click'); await flushPromises(); }
 beforeEach(() => {
   vi.resetAllMocks();
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -153,10 +153,10 @@ describe('密钥详情与生命周期', () => {
     pending.resolve(key);
     await flushPromises();
     expect(api.getMyKmsKey).toHaveBeenCalledWith('mine');
-    expect(wrapper.get('.kms-facts').text()).toContain('iam:me');
-    expect(wrapper.get('.kms-facts').text()).toContain('创建时间');
-    expect(wrapper.get('.kms-facts').text()).toContain('最近更新');
-    expect(wrapper.get('.kms-facts').text()).toContain('ES256');
+    expect(wrapper.get('.detail-list').text()).toContain('iam:me');
+    expect(wrapper.get('.detail-list').text()).toContain('创建时间');
+    expect(wrapper.get('.detail-list').text()).toContain('最近更新');
+    expect(wrapper.get('.detail-list').text()).toContain('ES256');
     expect(wrapper.get('[aria-label="归属人销毁政策"]').text()).toContain('当前密钥');
     expect(wrapper.text()).toContain('名下的全部密钥');
     expect(wrapper.text()).toContain('最短提前量：1 小时；最长提前量：2 小时');
@@ -181,7 +181,7 @@ describe('密钥详情与生命周期', () => {
     await confirm();
     expect(api.changeKmsKeyState).toHaveBeenCalledWith('mine', 'DISABLED', 3, expect.any(String));
     expect(api.changeMyKmsKeyState).not.toHaveBeenCalled();
-    expect(wrapper.get('.kms-facts').text()).toContain('iam:other');
+    expect(wrapper.get('.detail-list').text()).toContain('iam:other');
   });
 
   it('在没有政策编辑表单的治理页面读取本人新密钥时隐藏修改入口', async () => {
@@ -204,7 +204,7 @@ describe('密钥详情与生命周期', () => {
     await button('停用').trigger('click');
     await confirm();
     expect(manage).toHaveBeenLastCalledWith(key.keyRef, 'DISABLED', 3, expect.any(String));
-    expect(wrapper.get('.kms-facts').text()).toContain('DISABLED');
+    expect(wrapper.get('.detail-list').text()).toContain('已停用');
     await button('启用').trigger('click');
     await confirm();
     expect(manage).toHaveBeenLastCalledWith(key.keyRef, 'ACTIVE', 4, expect.any(String));
@@ -256,7 +256,7 @@ describe('密钥详情与生命周期', () => {
     expect(wrapper.get('[role="alertdialog"]').text()).toContain('网络结果不明');
     await confirm();
     expect(rotate.mock.calls[1]).toEqual(rotate.mock.calls[0]);
-    expect(wrapper.get('.kms-facts').text()).toContain('3');
+    expect(wrapper.get('.detail-list').text()).toContain('3');
     expect(wrapper.emitted('changed')).toHaveLength(1);
   });
 
@@ -287,7 +287,7 @@ describe('密钥详情与生命周期', () => {
     render({ keyRef: key.keyRef, mode });
     await flushPromises();
     await button('轮换').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     await wrapper.setProps({ mode: nextMode });
     await flushPromises();
     if (completion === 'resolve') pending.resolve(key); else pending.reject(new Error('旧入口错误'));
@@ -308,7 +308,7 @@ describe('密钥详情与生命周期', () => {
     render();
     await flushPromises();
     await button('轮换').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     wrapper.unmount();
     if (completion === 'resolve') pending.resolve(key); else pending.reject(new Error('已卸载写错误'));
     await flushPromises();
@@ -339,13 +339,13 @@ describe('密钥详情与生命周期', () => {
 
     if (completion === 'resolve') stale.resolve(key); else stale.reject(new Error('旧身份读取错误'));
     await flushPromises();
-    expect(wrapper.find('.kms-facts').exists()).toBe(false);
+    expect(wrapper.find('.detail-list').exists()).toBe(false);
     expect(wrapper.text()).not.toContain('旧身份读取错误');
     expect(api.loadMyDestructionPolicy).not.toHaveBeenCalled();
 
     current.resolve({ ...key, keyAlias: '新身份密钥' });
     await flushPromises();
-    expect(wrapper.get('.kms-facts').text()).toContain('iam:next');
+    expect(wrapper.get('.detail-list').text()).toContain('iam:next');
     expect(wrapper.get('h2').text()).toBe('新身份密钥');
     expect(api.getMyKmsKey).toHaveBeenCalledTimes(2);
   });
@@ -356,7 +356,7 @@ describe('密钥详情与生命周期', () => {
     await button('轮换').trigger('click');
     setKmsMe(null);
     await flushPromises();
-    expect(wrapper.find('.kms-facts').exists()).toBe(false);
+    expect(wrapper.find('.detail-list').exists()).toBe(false);
     expect(wrapper.findComponent({ name: 'KeyPublicKeys' }).exists()).toBe(false);
     expect(wrapper.find('[aria-label="归属人销毁政策"]').exists()).toBe(false);
     expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false);
@@ -383,20 +383,20 @@ describe('密钥详情与生命周期', () => {
     render({ keyRef: key.keyRef, mode });
     await flushPromises();
     await button('轮换').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     getDetail.mockResolvedValue({ ...key, keyAlias: '新身份详情', rowVersion: 8, ...(mode === 'governance' ? { ownerPrincipalId: 'iam:other' } : {}) });
     setKmsMe({ principalId: 'iam:next', subjectType: 'HUMAN', scopes: ['kms.key.read', 'kms.key.manage', 'kms.key.destroy'], pagePermissions: ['kms.page.my-keys'] });
     await flushPromises();
     expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false);
     await button('轮换').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
 
     if (completion === 'resolve') stale.resolve(key); else stale.reject(new Error('旧身份写错误'));
     await flushPromises();
     expect(wrapper.emitted('changed')).toBeUndefined();
     expect(wrapper.text()).not.toContain('旧身份写错误');
     expect(getDetail).toHaveBeenCalledTimes(2);
-    expect(wrapper.get('[role="alertdialog"] .button-danger').attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').attributes('disabled')).toBeDefined();
     expect(rotate.mock.calls[1][1]).toBe(8);
     expect(rotate.mock.calls[1][2]).not.toBe(rotate.mock.calls[0][2]);
 
@@ -411,11 +411,11 @@ describe('密钥详情与生命周期', () => {
     render({ keyRef: 'mine', initialKey: key });
     await flushPromises();
     expect(wrapper.text()).toContain('详情失败');
-    expect(wrapper.find('.kms-facts').exists()).toBe(false);
+    expect(wrapper.find('.detail-list').exists()).toBe(false);
     expect(wrapper.find('.kms-key-lifecycle').exists()).toBe(false);
     await button('重新读取详情').trigger('click');
     await flushPromises();
-    expect(wrapper.find('.kms-facts').exists()).toBe(true);
+    expect(wrapper.find('.detail-list').exists()).toBe(true);
   });
 
   it('非Error详情和政策失败均有兜底提示', async () => {
@@ -505,11 +505,11 @@ describe('密钥详情与生命周期', () => {
     render();
     await flushPromises();
     await button('轮换').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     await wrapper.get('[role="alertdialog"]').trigger('keydown', { key: 'Escape' });
     await wrapper.get('.drawer-backdrop').trigger('click');
     await wrapper.get('[aria-label="关闭"]').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     expect(api.rotateMyKmsKey).toHaveBeenCalledTimes(1);
     expect(wrapper.emitted('close')).toBeUndefined();
     expect(wrapper.get('[role="alertdialog"] .button-secondary').attributes('disabled')).toBeDefined();
@@ -569,13 +569,13 @@ describe('密钥详情与生命周期', () => {
     render();
     await flushPromises();
     expect(button('停用').attributes('disabled')).toBeDefined();
-    expect(wrapper.get('.kms-facts').text()).toContain('-');
+    expect(wrapper.get('.detail-list').text()).toContain('-');
     await button('取消销毁').trigger('click');
     expect(wrapper.get('[role="alertdialog"]').text()).toContain('从未领取过');
     await confirm();
     expect(api.cancelMyKmsDestruction).toHaveBeenCalledWith('mine', 3, expect.any(String));
     expect(api.getMyKmsKey).toHaveBeenCalledTimes(2);
-    expect(wrapper.get('.kms-facts').text()).toContain('DISABLED');
+    expect(wrapper.get('.detail-list').text()).toContain('已停用');
   });
 
   it.each(['resolve', 'reject'])('写请求期间切换密钥忽略旧操作%s结果', async (completion) => {
@@ -584,7 +584,7 @@ describe('密钥详情与生命周期', () => {
     render();
     await flushPromises();
     await button('轮换').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     api.getMyKmsKey.mockResolvedValue({ ...key, keyRef: 'second', keyAlias: '第二把' });
     await wrapper.setProps({ keyRef: 'second' });
     await flushPromises();
@@ -601,7 +601,7 @@ describe('密钥详情与生命周期', () => {
     render();
     await flushPromises();
     await button('取消销毁').trigger('click');
-    await wrapper.get('[role="alertdialog"] .button-danger').trigger('click');
+    await wrapper.get('[role="alertdialog"] footer button:not(.button-secondary)').trigger('click');
     await flushPromises();
     await wrapper.setProps({ keyRef: 'second' });
     await flushPromises();
@@ -629,7 +629,7 @@ describe('密钥详情与生命周期', () => {
     await flushPromises();
     expect(wrapper.text()).toContain('复制失败，请选中密钥标识复制');
     expect(wrapper.find('.kms-destruction-action').exists()).toBe(false);
-    expect(wrapper.get('.kms-facts').text()).toContain('加解密（ENCRYPT）');
+    expect(wrapper.get('.detail-list').text()).toContain('加解密');
   });
 
   it('卸载后忽略未完成的详情和政策请求', async () => {

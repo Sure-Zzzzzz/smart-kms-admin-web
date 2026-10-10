@@ -14,7 +14,7 @@ function preparePending(mock: MockState, mode: 'self' | 'governance' = 'self') {
 
 async function openDetails(page: Page, mode: 'self' | 'governance' = 'self') {
   await mount(page, mode === 'self' ? 'my-keys' : 'keys');
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   return page.getByRole('region', { name: '密钥详情', exact: true });
 }
 
@@ -49,7 +49,7 @@ test('长归属主体和销毁日期在治理详情抽屉内完整展示且不�
   const drawer = page.getByRole('dialog', { name: '订单签名密钥', exact: true });
   const content = drawer.locator('.drawer-content');
   expect(await content.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
-  const table = progress.locator('.kms-table-wrap');
+  const table = progress.locator('.data-table-scroll');
   const tableBounds = await table.boundingBox();
   const drawerBounds = await drawer.boundingBox();
   expect(tableBounds!.x).toBeGreaterThanOrEqual(drawerBounds!.x);
@@ -86,7 +86,7 @@ for (const mode of ['self', 'governance'] as const) {
     mock.destructionJobs[0]!.state = 'CLAIMED';
     mock.destructionJobs[0]!.attemptCount = 1;
     mock.destructionJobs[0]!.claimUntil = '2030-01-02T10:01:00.000Z';
-    await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+    await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
     await expect(versionRow(progress, 1)).toContainText('执行中');
     await expect(progress.getByRole('button', { name: '取消销毁', exact: true })).toHaveCount(0);
     mock.destructionJobs[0]!.state = 'COMPLETED';
@@ -112,7 +112,7 @@ for (const mode of ['self', 'governance'] as const) {
     await progress.getByRole('button', { name: '刷新销毁进度', exact: true }).click();
     await expect(versionRow(progress, 1)).toContainText('已完成');
     await expect(versionRow(progress, 2)).toContainText('已完成');
-    await expect(details).toContainText('DESTROYED');
+    await expect(details).toContainText('已销毁');
     await expect(progress.getByRole('button', { name: '刷新销毁进度', exact: true })).toHaveCount(0);
     expect(mock.writes).toHaveLength(1);
   });
@@ -165,7 +165,7 @@ test('取消后明细为空，重开抽屉仍无任务且没有二次写入', as
   expect(mock.destructionJobs).toEqual([]);
   expect(mock.keys[0]).toMatchObject({ state: 'ACTIVE', rowVersion: 2 });
   await page.getByRole('dialog', { name: '订单签名密钥', exact: true }).getByRole('button', { name: '关闭', exact: true }).click();
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   await expect(progress).toContainText('暂无销毁任务');
   expect(mock.writes).toEqual([{ method: 'DELETE', path: '/me/keys/browser-key-001/destruction', body: { expectedRowVersion: 1 } }]);
   await expectNoPageOverflow(page);
@@ -322,7 +322,8 @@ test('明细迟到期间同主体撤销read权限，旧任务不能回填或留�
     await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
     await expect(page.getByRole('region', { name: '销毁进度', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: '取消销毁', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('table')).not.toContainText('订单签名密钥');
+    // 权限撤销会同时清空列表，空态可能没有 table 节点；只验证业务对象不再出现在页面。
+    await expect(page.getByText('订单签名密钥', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(0);
     expect(mock.writes).toEqual([]);
   } finally { release(); }

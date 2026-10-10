@@ -59,9 +59,15 @@ for (const scenario of [
 test('抽屉和嵌套确认只保留顶层焦点，背景滚动在最后关闭后恢复', async ({ page, mock }) => {
   mock.keys = Array.from({ length: 100 }, (_, index) => ({ ...createKey(), keyRef: `scroll-key-${index}`, keyAlias: `滚动密钥 ${index}` }));
   await mount(page);
+  const pageSize = page.getByRole('button', { name: '每页条数', exact: true });
+  await pageSize.press('ArrowDown');
+  await pageSize.press('ArrowDown');
+  await pageSize.press('ArrowDown');
+  await pageSize.press('Enter');
+  await expect(page.getByRole('row')).toHaveCount(101);
   const original = await page.evaluate(() => [document.documentElement, document.body].map(element =>
     ['overflow', 'overflow-x', 'overflow-y', 'padding-right'].map(name => [name, element.style.getPropertyValue(name), element.style.getPropertyPriority(name)])));
-  const entry = page.getByRole('button', { name: '查看滚动密钥 0详情', exact: true });
+  const entry = page.getByRole('button', { name: '打开滚动密钥 0详情', exact: true });
   await entry.click();
   const drawer = page.getByRole('dialog', { name: '滚动密钥 0', exact: true });
   const rotate = drawer.getByRole('button', { name: '轮换', exact: true });
@@ -119,7 +125,7 @@ test('有政策浮层时卸载子应用会恢复已有滚动样式和priority', 
 
 test('嵌套确认冻结下层抽屉滚动，顶层可滚动且关闭后恢复抽屉', async ({ page, mock }) => {
   await mount(page);
-  await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+  await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
   const drawer = page.getByRole('dialog', { name: '订单签名密钥', exact: true });
   const content = drawer.locator('.drawer-content');
   await content.evaluate(element => {
@@ -141,8 +147,9 @@ test('嵌套确认冻结下层抽屉滚动，顶层可滚动且关闭后恢复�
   });
   await expect(dialog).toHaveCSS('overflow-y', 'auto');
   expect(await dialog.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
-  await dialog.hover({ position: { x: 30, y: 40 } });
-  await page.mouse.wheel(0, 400);
+  // 聚焦顶层确认后，用真实键盘分页操作验证其可滚动，避免滚轮落点受嵌套浮层影响。
+  await dialog.focus();
+  await page.keyboard.press('PageDown');
   await expect.poll(() => dialog.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
   expect(await content.evaluate(element => element.scrollTop)).toBe(before);
   await page.keyboard.press('Escape');
@@ -165,7 +172,7 @@ test('嵌套确认冻结下层抽屉滚动，顶层可滚动且关闭后恢复�
 for (const path of ['my-keys', 'keys']) {
   test(`${path} 文字详情打开抽屉，关闭和 Esc 恢复来源焦点，桌面遮罩可关闭`, async ({ page, mock }, testInfo) => {
     await mount(page, path);
-    const entry = page.getByRole('button', { name: '查看订单签名密钥详情', exact: true });
+    const entry = page.getByRole('button', { name: '打开订单签名密钥详情', exact: true });
     await expect(entry).toHaveText('查看详情');
     await entry.focus();
     await page.keyboard.press('Enter');
@@ -204,7 +211,7 @@ for (const path of ['my-keys', 'keys']) {
     const alias = 'W'.repeat(128);
     mock.keys[0]!.keyAlias = alias;
     await mount(page, path);
-    await page.getByRole('button', { name: `查看${alias}详情`, exact: true }).click();
+    await page.getByRole('button', { name: `打开${alias}详情`, exact: true }).click();
     const drawer = page.getByRole('dialog', { name: alias, exact: true });
     await expect(drawer).toBeVisible();
     const title = drawer.locator('.drawer-header h2');
@@ -235,7 +242,7 @@ for (const path of ['my-keys', 'keys']) {
 
 test('详情内生命周期确认 Esc 只关闭确认层，焦点返回操作，第二次 Esc 才关闭抽屉', async ({ page, mock }) => {
   await mount(page);
-  const entry = page.getByRole('button', { name: '查看订单签名密钥详情', exact: true });
+  const entry = page.getByRole('button', { name: '打开订单签名密钥详情', exact: true });
   await entry.click();
   const drawer = page.getByRole('dialog', { name: '订单签名密钥', exact: true });
   const rotate = drawer.getByRole('button', { name: '轮换', exact: true });
@@ -256,7 +263,7 @@ test('详情内生命周期确认 Esc 只关闭确认层，焦点返回操作，
 
 test('详情内销毁政策 Esc、遮罩和保存只关闭政策层并恢复焦点', async ({ page, mock }, testInfo) => {
   await mount(page);
-  const entry = page.getByRole('button', { name: '查看订单签名密钥详情', exact: true });
+  const entry = page.getByRole('button', { name: '打开订单签名密钥详情', exact: true });
   await entry.click();
   const drawer = page.getByRole('dialog', { name: '订单签名密钥', exact: true });
   const editPolicy = drawer.getByRole('button', { name: '修改销毁政策', exact: true });
@@ -303,7 +310,7 @@ test('生命周期提交中 Esc 和确认遮罩保留两层，完成后仍保留
   });
   try {
     await mount(page);
-    await page.getByRole('button', { name: '查看订单签名密钥详情', exact: true }).click();
+    await page.getByRole('button', { name: '打开订单签名密钥详情', exact: true }).click();
     const drawer = page.getByRole('dialog', { name: '订单签名密钥', exact: true });
     await drawer.getByRole('button', { name: '轮换', exact: true }).click();
     const dialog = page.getByRole('alertdialog', { name: '轮换密钥', exact: true });
@@ -318,7 +325,7 @@ test('生命周期提交中 Esc 和确认遮罩保留两层，完成后仍保留
     releaseRequest();
     await expect(dialog).toHaveCount(0);
     await expect(drawer).toBeVisible();
-    await expect(drawer.getByRole('region', { name: '密钥详情', exact: true }).locator('.kms-facts > div').filter({ has: page.getByText('活动版本', { exact: true }) })).toContainText('2');
+    await expect(drawer.getByRole('region', { name: '密钥详情', exact: true }).locator('.detail-list dt:has-text("活动版本") + dd')).toHaveText('2');
     expect(mock.writes).toEqual([{ method: 'POST', path: '/me/keys/browser-key-001/versions', body: { expectedRowVersion: 1 } }]);
     await expectNoPageOverflow(page);
   } finally {

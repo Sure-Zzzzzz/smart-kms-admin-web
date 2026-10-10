@@ -43,7 +43,7 @@ describe('KMS application shell', () => {
     expect(root.querySelector('[data-testid="route-content"]')?.textContent).toBe('Route content');
     setKmsMe({ principalId: 'iam:user:1', subjectType: 'HUMAN', scopes: [], pagePermissions: ['kms.page.keys', 'kms.page.destruction'] });
     await nextTick();
-    expect(Array.from(root.querySelectorAll('nav a')).map(link => link.textContent?.trim())).toEqual(['密钥', '销毁任务']);
+    expect(Array.from(root.querySelectorAll('nav a')).map(link => link.textContent?.trim())).toEqual(['密钥管理', '销毁任务']);
     setKmsMe(null);
     await nextTick();
     expect(root.querySelectorAll('nav a')).toHaveLength(0);
